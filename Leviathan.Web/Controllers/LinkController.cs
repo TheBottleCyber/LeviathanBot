@@ -93,8 +93,7 @@ namespace Leviathan.Core.Controllers
                         }
                     }
 
-                    return Ok("You can close this window\n" +
-                              $"Code: {code}, State: {state}, Id: {user.Id}");
+                    return Ok("You can close this window");
                 }
             }
 
@@ -122,8 +121,7 @@ namespace Leviathan.Core.Controllers
                 user.DiscordUserId = discordUserId;
                 await _memoryContext.SaveChangesAsync();
 
-                return Ok("You can close this window\n" +
-                          $"Code: {code}, State: {state}, Id: {user.Id}");
+                return Ok("You can close this window");
             }
 
             return BadRequest();

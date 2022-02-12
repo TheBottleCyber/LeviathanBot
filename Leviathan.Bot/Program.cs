@@ -1,5 +1,7 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.Reactive.Concurrency;
+using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -80,9 +82,7 @@ namespace Leviathan.Bot
                 await client.StartAsync();
                 await services.GetRequiredService<CommandHandler>().InitializeAsync();
 
-                Console.ReadLine();
-
-                await _scheduler.Shutdown();
+                await Task.Delay(Timeout.Infinite);
             }
         }
 

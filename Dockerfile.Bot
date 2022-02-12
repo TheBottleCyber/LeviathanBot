@@ -1,0 +1,25 @@
+﻿FROM mcr.microsoft.com/dotnet/runtime:6.0-alpine AS base
+WORKDIR /app
+
+RUN apk add --no-cache icu-libs
+
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
+    LC_ALL=en_US.UTF-8 \
+    LANG=en_US.UTF-8
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+COPY ["Leviathan.Bot/Leviathan.Bot.csproj", "Leviathan.Bot/"]
+COPY ["Leviathan.Core/Leviathan.Core.csproj", "Leviathan.Core/"]
+RUN dotnet restore "Leviathan.Bot/Leviathan.Bot.csproj"
+COPY . .
+WORKDIR "/src/Leviathan.Bot"
+RUN dotnet build "Leviathan.Bot.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "Leviathan.Bot.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Leviathan.Bot.dll"]

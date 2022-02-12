@@ -32,8 +32,8 @@ namespace Leviathan
 
             await Scheduler.Start();
             await CreateStartupJobs();
-            Console.ReadLine();
-            await Scheduler.Shutdown();
+            
+            await Task.Delay(Timeout.Infinite);
         }
 
         private static async Task CreateStartupJobs()

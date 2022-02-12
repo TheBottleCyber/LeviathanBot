@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  worker:
+    image: thebottle/leviathan-worker
+    restart: always
+    container_name: leviathan-worker
+    environment:
+      - LEVIATHAN_SETTINGS_FILE=/opt/leviathan/settings.json
+    volumes:
+      - C:/bot:/opt/leviathan
+
+  bot:
+    image: thebottle/leviathan-bot
+    restart: always
+    container_name: leviathan-bot
+    environment:
+      - LEVIATHAN_SETTINGS_FILE=/opt/leviathan/settings.json
+    volumes:
+      - C:/bot:/opt/leviathan
+  
+  web:
+    image: thebottle/leviathan-web
+    restart: always
+    container_name: leviathan-web
+    environment:
+      - LEVIATHAN_SETTINGS_FILE=/opt/leviathan/settings.json
+    volumes:
+      - C:/bot:/opt/leviathan
+    ports:
+      - "80:5000"

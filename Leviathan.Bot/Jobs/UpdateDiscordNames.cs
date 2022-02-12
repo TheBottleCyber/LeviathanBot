@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Discord.WebSocket;
 using ESI.NET;
 using Leviathan.Core.DatabaseContext;
