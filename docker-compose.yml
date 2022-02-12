@@ -8,7 +8,7 @@ services:
     environment:
       - LEVIATHAN_SETTINGS_FILE=/opt/leviathan/settings.json
     volumes:
-      - C:/bot:/opt/leviathan
+      - /opt/leviathan:/opt/leviathan
 
   bot:
     image: thebottle/leviathan-bot
@@ -17,7 +17,7 @@ services:
     environment:
       - LEVIATHAN_SETTINGS_FILE=/opt/leviathan/settings.json
     volumes:
-      - C:/bot:/opt/leviathan
+      - /opt/leviathan:/opt/leviathan
   
   web:
     image: thebottle/leviathan-web
@@ -26,6 +26,6 @@ services:
     environment:
       - LEVIATHAN_SETTINGS_FILE=/opt/leviathan/settings.json
     volumes:
-      - C:/bot:/opt/leviathan
+      - /opt/leviathan:/opt/leviathan
     ports:
-      - "80:5000"
+      - "80:80"

@@ -15,10 +15,10 @@
     "ServerGuildId": 0
   },
   "DatabaseConfig": {
-    "ConnectionString": "C:/bot/localSqlite.db"
+    "ConnectionString": "localSqlite.db"
   },
   "BotConfig": {
-    "WelcomeMessageEnabled": true,
+    "WelcomeMessageEnabled": false,
     "WelcomeMessage": "message",
     "WelcomeMessageChannelId": 0,
     "EnforceCorporationTicker": true,
