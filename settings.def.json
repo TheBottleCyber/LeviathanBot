@@ -18,10 +18,6 @@
     "ConnectionString": "C:/bot/localSqlite.db"
   },
   "BotConfig": {
-    "DiscordAdminRoles": [
-      "Bot-Admin"
-    ],
-    "Language": "en-US",
     "WelcomeMessageEnabled": true,
     "WelcomeMessage": "message",
     "WelcomeMessageChannelId": 0,

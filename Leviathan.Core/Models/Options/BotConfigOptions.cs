@@ -4,8 +4,6 @@ namespace Leviathan.Core.Models.Options
 {
     public class BotConfigOptions
     {
-        public List<string> DiscordAdminRoles { get; set; }
-        public string Language { get; set; }
         public bool WelcomeMessageEnabled { get; set; }
         public string WelcomeMessage { get; set; }
         public ulong WelcomeMessageChannelId { get; set; }
