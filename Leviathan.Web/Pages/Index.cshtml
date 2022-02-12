@@ -1,0 +1,28 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Leviathan";
+}
+
+<div class="text-center">
+    <div style="margin-top: 40px">
+        <h1>Instructions</h1>
+        <h6>1. Link your Discord via button labeled: "Link With Discord"</h6>
+        <h6>2. Link your API EVE key via button labeled: "Link With EVE Online"</h6>
+        <h6>3. Submit button "Proceed" and wait for your discord role</h6>
+    </div>
+
+    <div style="margin-top: 40px" class="btn-group" role="group">
+        <a href="@this.Model._discordButtonLink" target="_blank">
+            <button type="button" class="btn btn-primary btn-lg">Link with Discord</button>
+        </a>
+        <a href="@this.Model._eveButtonLink" target="_blank">
+            <button type="button" class="btn btn-primary btn-lg">Link with EVE Online</button>
+        </a>
+    </div>
+    <div style="margin-top: 40px">
+        <a href="/proceed?state=@this.Model._state">
+            <button type="button" class="btn btn-success btn-lg">Proceed</button>
+        </a>
+    </div>
+</div>

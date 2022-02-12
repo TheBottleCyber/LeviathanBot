@@ -1,0 +1,41 @@
+{
+  "ESIConfig": {
+    "EsiUrl": "https://esi.evetech.net/",
+    "DataSource": "Tranquility",
+    "ClientId": "**********",
+    "SecretKey": "**********",
+    "CallbackUrl": "http://localhost/evecallback",
+    "UserAgent": "LEVIATHAN"
+  },
+  "DiscordConfig": {
+    "ClientId": 0,
+    "ClientSecret": "**********",
+    "BotToken": "**********",
+    "CallbackUrl": "http://localhost/discordcallback",
+    "ServerGuildId": 0
+  },
+  "DatabaseConfig": {
+    "ConnectionString": "C:/bot/localSqlite.db"
+  },
+  "BotConfig": {
+    "DiscordAdminRoles": [
+      "Bot-Admin"
+    ],
+    "Language": "en-US",
+    "WelcomeMessageEnabled": true,
+    "WelcomeMessage": "message",
+    "WelcomeMessageChannelId": 0,
+    "EnforceCorporationTicker": true,
+    "EnforceAllianceTicker": false,
+    "EnforceCharacterName": true,
+    "RemoveRolesIfTokenIsInvalid": true,
+    "AuthGroups": [
+      {
+        "AllowedCorporations": ["CORP_TICKER"],
+        "AllowedCharacters": ["Character Name"],
+        "AllowedAlliances": ["ALLY_TICKER"],
+        "DiscordRoles": ["Discord Role"]
+      }
+    ]
+  }
+}
