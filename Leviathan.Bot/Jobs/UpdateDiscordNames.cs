@@ -16,7 +16,7 @@ namespace Leviathan.Bot.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
-            
+
             log.Information("Job update_discord_names started");
             var discordServerGuild = Program.DiscordSocketClient.GetGuild(Program.DiscordConfigOptions.ServerGuildId);
 
@@ -29,44 +29,44 @@ namespace Leviathan.Bot.Jobs
                         foreach (var character in sqliteContext.Characters)
                         {
                             var discordUser = discordServerGuild.GetUser(character.DiscordUserId);
-                            if (discordUser is null) continue;
+                                if (discordUser is null) continue;
 
-                            var corporation = await sqliteContext.Corporations.FirstOrDefaultAsync(x => x.CorporationId == character.EsiCorporationID);
-                            var alliance = await sqliteContext.Alliances.FirstOrDefaultAsync(x => x.AllianceId == character.EsiAllianceID);
+                                var corporation = await sqliteContext.Corporations.FirstOrDefaultAsync(x => x.CorporationId == character.EsiCorporationID);
+                                var alliance = await sqliteContext.Alliances.FirstOrDefaultAsync(x => x.AllianceId == character.EsiAllianceID);
 
-                            var discordNicknameNeeded = "";
+                                var discordNicknameNeeded = "";
 
-                            if (Program.BotConfigOptions.EnforceAllianceTicker)
-                            {
-                                var allianceTicker = "NULL";
-                                if (alliance is not null)
+                                if (Program.BotConfigOptions.EnforceAllianceTicker)
                                 {
-                                    allianceTicker = alliance.Ticker;
+                                    var allianceTicker = "NULL";
+                                    if (alliance is not null)
+                                    {
+                                        allianceTicker = alliance.Ticker;
+                                    }
+
+                                    discordNicknameNeeded += $"[{allianceTicker}] ";
                                 }
 
-                                discordNicknameNeeded += $"[{allianceTicker}] ";
-                            }
+                                if (Program.BotConfigOptions.EnforceCorporationTicker && corporation is not null) discordNicknameNeeded += $"[{corporation.Ticker}] ";
+                                discordNicknameNeeded += Program.BotConfigOptions.EnforceCharacterName ? character.EsiCharacterName : discordUser.Username;
 
-                            if (Program.BotConfigOptions.EnforceCorporationTicker) discordNicknameNeeded += $"[{corporation!.Ticker}] ";
-                            discordNicknameNeeded += Program.BotConfigOptions.EnforceCharacterName ? character.EsiCharacterName : discordUser.Username;
-
-                            if (discordUser.Nickname != discordNicknameNeeded)
-                            {
-                                try
+                                if (discordUser.Nickname != discordNicknameNeeded)
                                 {
-                                    log.Information($"Job update_discord_names trying rename user with username: {discordUser.Username}#{discordUser.Discriminator} to nickname: {discordNicknameNeeded}");
-                                    await discordUser.ModifyAsync(x => { x.Nickname = discordNicknameNeeded; });
-                                    log.Information($"Job update_discord_names rename user with username: {discordUser.Username}#{discordUser.Discriminator} success");
+                                    try
+                                    {
+                                        log.Information($"Job update_discord_names trying rename user with username: {discordUser.Username}#{discordUser.Discriminator} to nickname: {discordNicknameNeeded}");
+                                        await discordUser.ModifyAsync(x => { x.Nickname = discordNicknameNeeded; });
+                                        log.Information($"Job update_discord_names rename user with username: {discordUser.Username}#{discordUser.Discriminator} success");
+                                    }
+                                    catch (Discord.Net.HttpException)
+                                    {
+                                        log.Warning($"Job update_discord_names cannot rename user with username: {discordUser.Username}#{discordUser.Discriminator} not enough priveleges");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        log.Error(ex, $"Job update_discord_names ModifyAsync user with username: {discordUser.Username}#{discordUser.Discriminator} failed");
+                                    }
                                 }
-                                catch (Discord.Net.HttpException)
-                                {
-                                    log.Warning($"Job update_discord_names cannot rename user with username: {discordUser.Username}#{discordUser.Discriminator} not enough priveleges");
-                                }
-                                catch (Exception ex)
-                                {
-                                    log.Error(ex, $"Job update_discord_names ModifyAsync user with username: {discordUser.Username}#{discordUser.Discriminator} failed");
-                                }
-                            }
                         }
                     }
                 }
