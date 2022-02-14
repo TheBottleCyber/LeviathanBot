@@ -1,6 +1,6 @@
 <img align="left" src="images/logo.png" class="img-thumbnail" width="144"  alt="logo"/>
 
-# Leviathan EVE Online Discord Bot
+# Leviathan EVE Online Discord Bot WIP
 
 Leviathan is bot for EVE Online authorization, including tickers and character names with filters
 
@@ -10,7 +10,7 @@ Leviathan is bot for EVE Online authorization, including tickers and character n
 
 - **Visual Studio 2022** or **Rider** for changing code
 - **.NET 6 SDK** for building
-- **Docker Engine** and **Docker-Compose** for running in container
+- **Docker Engine** and **Docker Compose** for running in container
 
 ### Set up your discord bot
 
