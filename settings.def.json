@@ -18,6 +18,7 @@
     "ConnectionString": "localSqlite.db"
   },
   "BotConfig": {
+    "Language": "en-US",
     "WelcomeMessageEnabled": false,
     "WelcomeMessage": "message",
     "WelcomeMessageChannelId": 0,

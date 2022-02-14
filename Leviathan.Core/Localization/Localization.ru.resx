@@ -1,0 +1,38 @@
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="DiscordTimeCommand" xml:space="preserve">
+        <value>Время в EVE Online:</value>
+    </data>
+    <data name="Days" xml:space="preserve">
+        <value>Дней</value>
+    </data>
+    <data name="Hours" xml:space="preserve">
+        <value>Часов</value>
+    </data>
+    <data name="Minutes" xml:space="preserve">
+        <value>Минут</value>
+    </data>
+    <data name="Seconds" xml:space="preserve">
+        <value>Секунд</value>
+    </data>
+    <data name="DiscordAboutCommandRunTime" xml:space="preserve">
+        <value>С запуска прошло:</value>
+    </data>
+    <data name="Developer" xml:space="preserve">
+        <value>Разработчик</value>
+    </data>
+    <data name="DiscordAboutCommandInGameNick" xml:space="preserve">
+        <value>Ник в игре:</value>
+    </data>
+</root>

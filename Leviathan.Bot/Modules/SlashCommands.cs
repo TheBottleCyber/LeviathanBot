@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Discord.Interactions;
 using Leviathan.Bot.Services;
+using Leviathan.Core.Localization;
 
 namespace Leviathan.Bot.Modules
 {
@@ -20,17 +21,29 @@ namespace Leviathan.Bot.Modules
         public async Task About()
         {
             var dateUntilProcessStarted = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
-            var stringDate = $"{dateUntilProcessStarted.Days} Days {dateUntilProcessStarted.Hours} Hours {dateUntilProcessStarted.Minutes} Minutes {dateUntilProcessStarted.Seconds} Seconds";
+            var daysLocalizedString = LocalizationHelper.GetLocalizedString("Days");
+            var hoursLocalizedString = LocalizationHelper.GetLocalizedString("Hours");
+            var minutesLocalizedString = LocalizationHelper.GetLocalizedString("Minutes");
+            var secondsLocalizedString = LocalizationHelper.GetLocalizedString("Seconds");
             
-            await RespondAsync($"Leviathan v1.0.0 - EVE Online Discord Bot\n" +
-                               "Developer: TheBottle (In-game Name: The Bottle)\n\n" +
-                               $"Run Time: {stringDate}");
+            var stringDate = $"{dateUntilProcessStarted.Days} {daysLocalizedString} " +
+                             $"{dateUntilProcessStarted.Hours} {hoursLocalizedString} " +
+                             $"{dateUntilProcessStarted.Minutes} {minutesLocalizedString} " +
+                             $"{dateUntilProcessStarted.Seconds} {secondsLocalizedString}";
+            
+            var runTimeLocalizedString = LocalizationHelper.GetLocalizedString("DiscordAboutCommandRunTime");
+            var devLocalizedString = LocalizationHelper.GetLocalizedString("Developer");
+            var inGameNickLocalizedString = LocalizationHelper.GetLocalizedString("DiscordAboutCommandInGameNick");
+            
+            await RespondAsync($"Leviathan v1.0.3 - EVE Online Discord Bot\n" +
+                               $"{devLocalizedString}: TheBottle ({inGameNickLocalizedString} The Bottle)\n\n" +
+                               $"{runTimeLocalizedString} {stringDate}");
         }
         
         [SlashCommand("time", "eve online time")]
         public async Task Time()
         {
-            await RespondAsync($"Time in EVE Online now: {DateTime.UtcNow}");
+            await RespondAsync($"{LocalizationHelper.GetLocalizedString("DiscordTimeCommand")} {DateTime.UtcNow}");
         }
     }
 }

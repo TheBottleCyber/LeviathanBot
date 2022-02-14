@@ -1,4 +1,5 @@
 ﻿using System.Configuration;
+using System.Globalization;
 using System.Reflection;
 using Discord;
 using Discord.Rest;
@@ -30,6 +31,10 @@ namespace Leviathan
             EsiConfigOptions = Options.Create(config.GetRequiredSection("ESIConfig").Get<EsiConfig>());
             Scheduler = await new StdSchedulerFactory().GetScheduler();
 
+            var botConfigSettings = config.GetSection("BotConfig");
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
+            
             await Scheduler.Start();
             await CreateStartupJobs();
             

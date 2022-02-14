@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Globalization;
 using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using Discord;
@@ -28,7 +29,6 @@ namespace Leviathan.Bot
         public static DiscordConfigOptions DiscordConfigOptions { get; set; } = new DiscordConfigOptions();
         public static BotConfigOptions BotConfigOptions { get; set; } = new BotConfigOptions();
         public static DiscordSocketClient DiscordSocketClient { get; set; } = null!;
-        private Logger _logger;
         private InteractionService _commands;
         private IScheduler _scheduler;
 
@@ -40,6 +40,10 @@ namespace Leviathan.Bot
             var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
             log.Information($"Settings dump: {JsonConvert.SerializeObject(BotConfigOptions)}");
+            
+            var botConfigSettings = config.GetSection("BotConfig");
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
 
             var services = new ServiceCollection();
             services.AddSingleton(DiscordConfigOptions);
@@ -61,12 +65,12 @@ namespace Leviathan.Bot
             {
                 var client = services.GetRequiredService<DiscordSocketClient>();
                 var commands = services.GetRequiredService<InteractionService>();
-                _logger = services.GetRequiredService<Logger>();
+                Log.Logger = services.GetRequiredService<Logger>();
 
                 DiscordSocketClient = client;
                 _commands = commands;
 
-                client.Log += message => DiscordClientOnLog(message, _logger);
+                client.Log += DiscordClientOnLog;
                 client.UserJoined += ClientOnUserJoined;
                 client.Ready += async () =>
                 {
@@ -96,7 +100,7 @@ namespace Leviathan.Bot
 
                 if (discordServerGuild is null)
                 {
-                    _logger.Error($"Server guild with id: {DiscordConfigOptions.ServerGuildId} not found");
+                    Log.Error($"Server guild with id: {DiscordConfigOptions.ServerGuildId} not found");
                 }
 
                 var discordChannel = await DiscordSocketClient.GetChannelAsync(BotConfigOptions.WelcomeMessageChannelId);
@@ -104,13 +108,13 @@ namespace Leviathan.Bot
                 if (discordChannel is IMessageChannel msgChannel)
                 {
                     var message = BotConfigOptions.WelcomeMessage
-                                                  .Replace("$mention", MentionUtils.MentionUser(arg.Id));
+                                                  .Replace("$user_mention", arg.Mention);
 
                     await msgChannel.SendMessageAsync(message);
                 }
                 else
                 {
-                    _logger.Error($"Server welcome message channel with id: {BotConfigOptions.WelcomeMessageChannelId} not found");
+                    Log.Error($"Server welcome message channel with id: {BotConfigOptions.WelcomeMessageChannelId} not found");
                 }
             }
         }
@@ -124,7 +128,7 @@ namespace Leviathan.Bot
                 "update_discord_roles", x => x.RepeatForever().WithIntervalInMinutes(5));
         }
 
-        private static Task DiscordClientOnLog(LogMessage arg, ILogger logger)
+        private static Task DiscordClientOnLog(LogMessage arg)
         {
             var severity = arg.Severity switch
             {
@@ -137,7 +141,7 @@ namespace Leviathan.Bot
                 _ => LogEventLevel.Information
             };
 
-            logger.Write(severity, arg.Exception, arg.Message);
+            Log.Write(severity, arg.Exception, arg.Message);
 
             return Task.CompletedTask;
         }

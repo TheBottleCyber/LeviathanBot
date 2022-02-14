@@ -4,7 +4,9 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Serilog.Core;
 
 namespace Leviathan.Bot.Services
 {
@@ -37,8 +39,7 @@ namespace Leviathan.Bot.Services
             }
             catch (Exception ex)
             {
-                using var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
-                log.Error(ex, "HandleInteraction Exception");
+                Log.Error(ex, "HandleInteraction Exception");
                 
                 if (arg.Type == InteractionType.ApplicationCommand)
                 {

@@ -28,7 +28,6 @@ namespace Leviathan.Core.Controllers
         {
             _memoryContext = memoryContext;
             _sqliteContext = sqliteContext;
-
             _discordConfigOptions = discordConfigOptions.Value;
             _esiConfig = esiConfig;
         }

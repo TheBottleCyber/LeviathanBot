@@ -13,10 +13,10 @@
     </div>
 
     <div style="margin-top: 40px" class="btn-group" role="group">
-        <a href="@this.Model._discordButtonLink" target="_blank">
+        <a href="#" onclick="popupWindow('@this.Model._discordButtonLink', 'discord', window, 600, 800);" target="_blank" >
             <button type="button" class="btn btn-primary btn-lg">Link with Discord</button>
         </a>
-        <a href="@this.Model._eveButtonLink" target="_blank">
+        <a href="#" onclick="popupWindow('@this.Model._eveButtonLink', 'eve', window, 800, 800);" target="_blank">
             <button type="button" class="btn btn-primary btn-lg">Link with EVE Online</button>
         </a>
     </div>
@@ -26,3 +26,14 @@
         </a>
     </div>
 </div>
+
+@section Scripts
+{
+    <script>
+    function popupWindow(url, windowName, win, w, h) {
+        const y = win.top.outerHeight / 2 + win.top.screenY - ( h / 2);
+        const x = win.top.outerWidth / 2 + win.top.screenX - ( w / 2);
+        return win.open(url, windowName, `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${w}, height=${h}, top=${y}, left=${x}`);
+    }
+    </script>
+}
