@@ -24,6 +24,7 @@ Leviathan is bot for EVE Online authorization, including tickers and character n
 - **SQLite** database with **Enitity Framework Core**, **ESI.NET** package for **EVE Online ESI** API requests, **Quartz** for delaying jobs and **Discord.Net** package for discord API
 - Only **three buttons** for getting discord roles **no needs to write anything** in the discord channel
 - Customizable **settings.json** file
+- Supported languages is **English** and **Russian**. Make pull request for your language!
 - Allow only **authed** ingame characters into your Discord group
 - Multiply discord roles with one of the filters
 - Filters works for **character names**, **corporations** and **alliances**

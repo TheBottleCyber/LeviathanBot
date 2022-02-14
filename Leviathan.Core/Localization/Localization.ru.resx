@@ -35,4 +35,10 @@
     <data name="DiscordAboutCommandInGameNick" xml:space="preserve">
         <value>Ник в игре:</value>
     </data>
+    <data name="WebInstructionsText" xml:space="preserve">
+        <value>1. Привяжите свой дискорд аккаунт через кнопку: "Log In with Discord"~-~2. Привяжите своего основного персонажа EVE Online через кнопку: "Log In with EVE Online"~-~3. Нажмите на кнопку "Proceed" и ждите получения роли в дискорде</value>
+    </data>
+    <data name="WebInstructionsHeader" xml:space="preserve">
+        <value>Инструкция</value>
+    </data>
 </root>

@@ -42,4 +42,10 @@
     <data name="DiscordAboutCommandInGameNick" xml:space="preserve">
         <value>In-game Nickname:</value>
     </data>
+    <data name="WebInstructionsText" xml:space="preserve">
+        <value>1. Link your Discord via button labeled: "Log In with Discord"~-~2. Link your API EVE key via button labeled: "Log In with EVE Online"~-~3. Submit button "Proceed" and wait for your discord role</value>
+    </data>
+    <data name="WebInstructionsHeader" xml:space="preserve">
+        <value>Instructions</value>
+    </data>
 </root>

@@ -18,7 +18,7 @@ namespace Leviathan.Web
 {
     public class Program
     {
-        public static int Main(string[] args)
+        public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                          .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -31,12 +31,10 @@ namespace Leviathan.Web
                 Log.Information("Starting web host");
 
                 CreateHostBuilder(args).Build().Run();
-                return 0;
             }
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Host terminated unexpectedly");
-                return 1;
             }
             finally
             {
@@ -52,23 +50,21 @@ namespace Leviathan.Web
 
     public class Startup
     {
-        public Settings Settings { get; }
-        public IWebHostEnvironment IWebHostEnvironment { get; }
+        private Settings _settings;
         private string _dataSource;
-
+        
         public Startup(IWebHostEnvironment environment)
         {
-            IWebHostEnvironment = environment;
-            Settings = LeviathanSettings.GetSettingsFile();
-            _dataSource = LeviathanSettings.GetDatabaseFile(Settings);
+            _settings = LeviathanSettings.GetSettingsFile();
+            _dataSource = LeviathanSettings.GetDatabaseFile(_settings);
             
-            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(Settings.BotConfig.Language);
-            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(Settings.BotConfig.Language);
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
         }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(Settings);
+            services.AddSingleton(_settings);
             services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={_dataSource};"));
             services.AddDbContext<MemoryContext>(opt => opt.UseInMemoryDatabase("users"));
             services.AddRazorPages();

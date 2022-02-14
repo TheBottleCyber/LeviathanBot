@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Globalization;
 using System.Web;
 using ESI.NET;
 using ESI.NET.Enumerations;
 using Leviathan.Core.DatabaseContext;
+using Leviathan.Core.Localization;
 using Leviathan.Core.Models.Database;
 using Leviathan.Core.Models.Options;
 using Microsoft.AspNetCore.Mvc;
@@ -19,8 +21,19 @@ namespace Leviathan.Web.Pages
         public readonly string _discordButtonLink;
         public readonly string _state;
 
+        public readonly string _localizedIndexInstructionHeader;
+        public readonly string[] _localizedIndexInstructionText;
+
         public IndexModel(MemoryContext context, Settings settings)
         {
+            // temporary?
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(settings.BotConfig.Language);
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(settings.BotConfig.Language);
+            
+            _localizedIndexInstructionHeader = LocalizationHelper.GetLocalizedString("WebInstructionsHeader");
+            _localizedIndexInstructionText = LocalizationHelper.GetLocalizedString("WebInstructionsText")
+                                                               .Split("~-~"); // that cant split normally
+            
             var esiClient = new EsiClient(Options.Create(settings.ESIConfig));
             
             _state = Guid.NewGuid().ToString().Replace("-", "")[..16];

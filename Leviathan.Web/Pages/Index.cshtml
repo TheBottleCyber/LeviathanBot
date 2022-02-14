@@ -1,4 +1,5 @@
 ﻿@page
+@using Leviathan.Core.Localization
 @model IndexModel
 @{
     ViewData["Title"] = "Leviathan";
@@ -6,19 +7,18 @@
 
 <div class="text-center">
     <div style="margin-top: 40px">
-        <h1>Instructions</h1>
-        <h6>1. Link your Discord via button labeled: "Link With Discord"</h6>
-        <h6>2. Link your API EVE key via button labeled: "Link With EVE Online"</h6>
-        <h6>3. Submit button "Proceed" and wait for your discord role</h6>
+        <h1>@this.Model._localizedIndexInstructionHeader</h1>
+        @foreach (var instruction in this.Model._localizedIndexInstructionText)
+        {
+            <h6>@instruction</h6>
+        }
     </div>
 
-    <div style="margin-top: 40px" class="btn-group" role="group">
-        <a href="#" onclick="popupWindow('@this.Model._discordButtonLink', 'discord', window, 600, 800);" target="_blank" >
-            <button type="button" class="btn btn-primary btn-lg">Link with Discord</button>
-        </a>
-        <a href="#" onclick="popupWindow('@this.Model._eveButtonLink', 'eve', window, 800, 800);" target="_blank">
-            <button type="button" class="btn btn-primary btn-lg">Link with EVE Online</button>
-        </a>
+    <div style="margin-top: 40px" class="img-group" role="group">
+        <input type="image" src="img/discord-sso.png" alt="Login with Discord"
+                     onclick="popupWindow('@this.Model._discordButtonLink', 'discord', window, 600, 800);" style="border-radius: 3px;"/>
+        <input type="image" src="img/eve-sso.png" alt="Login with EVE Online"
+             onclick="popupWindow('@this.Model._eveButtonLink', 'eve', window, 800, 800);"/>
     </div>
     <div style="margin-top: 40px">
         <a href="/proceed?state=@this.Model._state">
