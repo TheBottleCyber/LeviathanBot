@@ -20,16 +20,15 @@ namespace Leviathan.Core.Controllers
     {
         private readonly MemoryContext _memoryContext;
         private readonly SqliteContext _sqliteContext;
-        private readonly DiscordConfigOptions _discordConfigOptions;
+        private readonly Settings _settings;
         private readonly IOptions<EsiConfig> _esiConfig;
 
-        public LinkController(MemoryContext memoryContext, SqliteContext sqliteContext,
-            IOptions<DiscordConfigOptions> discordConfigOptions, IOptions<EsiConfig> esiConfig)
+        public LinkController(MemoryContext memoryContext, SqliteContext sqliteContext, Settings settings)
         {
             _memoryContext = memoryContext;
             _sqliteContext = sqliteContext;
-            _discordConfigOptions = discordConfigOptions.Value;
-            _esiConfig = esiConfig;
+            _settings = settings;
+            _esiConfig = Options.Create(settings.ESIConfig);
         }
 
         [HttpGet("/evecallback")]
@@ -106,8 +105,8 @@ namespace Leviathan.Core.Controllers
 
             if (user is not null)
             {
-                var discordToken = new DiscordTokenRequest(_discordConfigOptions.ClientId,
-                    _discordConfigOptions.ClientSecret, code, _discordConfigOptions.CallbackUrl);
+                var discordToken = new DiscordTokenRequest(_settings.DiscordConfig.ClientId,
+                    _settings.DiscordConfig.ClientSecret, code, _settings.DiscordConfig.CallbackUrl);
 
                 //TODO: normal conversion
                 var postData =

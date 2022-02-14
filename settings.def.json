@@ -22,6 +22,8 @@
     "WelcomeMessageEnabled": false,
     "WelcomeMessage": "message",
     "WelcomeMessageChannelId": 0,
+    "PingCommandPeoples": [],
+    "PingCommandMessage": "",
     "EnforceCorporationTicker": true,
     "EnforceAllianceTicker": false,
     "EnforceCharacterName": true,

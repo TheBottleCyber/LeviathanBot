@@ -18,7 +18,7 @@ namespace Leviathan.Bot.Jobs
             var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
             log.Information("Job update_discord_names started");
-            var discordServerGuild = Program.DiscordSocketClient.GetGuild(Program.DiscordConfigOptions.ServerGuildId);
+            var discordServerGuild = Program.DiscordSocketClient.GetGuild(Program.DiscordConfig.ServerGuildId);
 
             if (discordServerGuild is not null)
             {
@@ -36,7 +36,7 @@ namespace Leviathan.Bot.Jobs
 
                                 var discordNicknameNeeded = "";
 
-                                if (Program.BotConfigOptions.EnforceAllianceTicker)
+                                if (Program.BotConfig.EnforceAllianceTicker)
                                 {
                                     var allianceTicker = "NULL";
                                     if (alliance is not null)
@@ -47,8 +47,8 @@ namespace Leviathan.Bot.Jobs
                                     discordNicknameNeeded += $"[{allianceTicker}] ";
                                 }
 
-                                if (Program.BotConfigOptions.EnforceCorporationTicker && corporation is not null) discordNicknameNeeded += $"[{corporation.Ticker}] ";
-                                discordNicknameNeeded += Program.BotConfigOptions.EnforceCharacterName ? character.EsiCharacterName : discordUser.Username;
+                                if (Program.BotConfig.EnforceCorporationTicker && corporation is not null) discordNicknameNeeded += $"[{corporation.Ticker}] ";
+                                discordNicknameNeeded += Program.BotConfig.EnforceCharacterName ? character.EsiCharacterName : discordUser.Username;
 
                                 if (discordUser.Nickname != discordNicknameNeeded)
                                 {
@@ -73,7 +73,7 @@ namespace Leviathan.Bot.Jobs
             }
             else
             {
-                log.Error($"Job update_discord_names server guild with id: {Program.DiscordConfigOptions.ServerGuildId} not found");
+                log.Error($"Job update_discord_names server guild with id: {Program.DiscordConfig.ServerGuildId} not found");
             }
 
             log.Information("Job update_discord_names finished");

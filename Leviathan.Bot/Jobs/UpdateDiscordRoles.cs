@@ -22,7 +22,7 @@ namespace Leviathan.Bot.Jobs
             var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
 
             log.Information("Job update_discord_roles started");
-            var discordServerGuild = Program.DiscordSocketClient.GetGuild(Program.DiscordConfigOptions.ServerGuildId);
+            var discordServerGuild = Program.DiscordSocketClient.GetGuild(Program.DiscordConfig.ServerGuildId);
 
             if (discordServerGuild is not null)
             {
@@ -42,7 +42,7 @@ namespace Leviathan.Bot.Jobs
                                 var alliance = await sqliteContext.Alliances.FirstOrDefaultAsync(x => x.AllianceId == character.EsiAllianceID);
 
                                 var listRoles = new Dictionary<string, bool>();
-                                foreach (var authGroup in Program.BotConfigOptions.AuthGroups)
+                                foreach (var authGroup in Program.BotConfig.AuthGroups)
                                 {
                                     bool assigmentBoolean = false;
 
@@ -75,7 +75,7 @@ namespace Leviathan.Bot.Jobs
                                         assigmentBoolean = true;
                                     }
 
-                                    if (Program.BotConfigOptions.RemoveRolesIfTokenIsInvalid &&
+                                    if (Program.BotConfig.RemoveRolesIfTokenIsInvalid &&
                                         !character.EsiSsoStatus)
                                     {
                                         log.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
@@ -131,11 +131,11 @@ namespace Leviathan.Bot.Jobs
                             }
                             else
                             {
-                                if (Program.BotConfigOptions.RemoveRolesIfTokenIsInvalid)
+                                if (Program.BotConfig.RemoveRolesIfTokenIsInvalid)
                                 {
                                     var overAllConfigRoles = new List<string>();
 
-                                    foreach (var authGroup in Program.BotConfigOptions.AuthGroups)
+                                    foreach (var authGroup in Program.BotConfig.AuthGroups)
                                     {
                                         overAllConfigRoles.AddRange(authGroup.DiscordRoles);
                                     }
@@ -181,7 +181,7 @@ namespace Leviathan.Bot.Jobs
             }
             else
             {
-                log.Error($"Job update_discord_roles server guild with id: {Program.DiscordConfigOptions.ServerGuildId} not found");
+                log.Error($"Job update_discord_roles server guild with id: {Program.DiscordConfig.ServerGuildId} not found");
             }
 
             log.Information("Job update_discord_roles finished");

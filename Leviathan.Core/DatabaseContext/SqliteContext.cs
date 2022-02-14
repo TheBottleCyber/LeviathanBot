@@ -8,6 +8,10 @@ namespace Leviathan.Core.DatabaseContext
 {
     public class SqliteContext : DbContext
     {
+        public DbSet<Character> Characters { get; set; }
+        public DbSet<Corporation> Corporations { get; set; }
+        public DbSet<Alliance> Alliances { get; set; }
+        
         public SqliteContext(DbContextOptions<SqliteContext> options) : base(options)
         {
             EnsureCreated();
@@ -32,9 +36,5 @@ namespace Leviathan.Core.DatabaseContext
             var config = LeviathanSettings.GetSettingsFile();
             optionsBuilder.UseSqlite(@$"DataSource={LeviathanSettings.GetDatabaseFile(config)};");
         }
-
-        public DbSet<Character> Characters { get; set; }
-        public DbSet<Corporation> Corporations { get; set; }
-        public DbSet<Alliance> Alliances { get; set; }
     }
 }

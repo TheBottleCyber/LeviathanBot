@@ -5,8 +5,8 @@ namespace Leviathan.Core.DatabaseContext
 {
     public class MemoryContext : DbContext
     {
-        public MemoryContext(DbContextOptions<MemoryContext> options) : base(options) { }
- 
         public DbSet<Character> Characters { get; set; }
+        
+        public MemoryContext(DbContextOptions<MemoryContext> options) : base(options) { }
     }
 }

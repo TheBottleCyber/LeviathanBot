@@ -1,56 +1,101 @@
-﻿using System.Configuration;
-using System.Globalization;
-using System.Reflection;
-using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
-using ESI.NET;
-using ESI.NET.Enumerations;
+﻿using System.Globalization;
 using Leviathan.Core.Extensions;
-using Leviathan.Core.Models;
+using Leviathan.Core.Models.Options;
 using Leviathan.Jobs;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Quartz;
-using Quartz.Impl;
 using Serilog;
+using Serilog.Events;
 
 namespace Leviathan
 {
     public class Program
     {
-        public static IScheduler Scheduler { get; set; } = null!;
-        public static IOptions<EsiConfig> EsiConfigOptions { get; set; } = null!;
-
-        public static async Task Main()
+        public static async Task Main(string[] args)
         {
-            //TODO: make dependency injection
-            var config = LeviathanSettings.GetSettingsFile();
-            EsiConfigOptions = Options.Create(config.GetRequiredSection("ESIConfig").Get<EsiConfig>());
-            Scheduler = await new StdSchedulerFactory().GetScheduler();
+            await new Startup().Start(args);
+        }
+    }
 
-            var botConfigSettings = config.GetSection("BotConfig");
-            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
-            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
-            
-            await Scheduler.Start();
-            await CreateStartupJobs();
-            
-            await Task.Delay(Timeout.Infinite);
+    public class Startup
+    {
+        private Settings _settings;
+
+        public Startup()
+        {
+            _settings = LeviathanSettings.GetSettingsFile();
+
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
+
+            Log.Logger = new LoggerConfiguration()
+                         .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                         .Enrich.FromLogContext()
+                         .WriteTo.Console()
+                         .CreateLogger();
         }
 
-        private static async Task CreateStartupJobs()
+        public async Task Start(string[] args)
         {
-            await QuartzJobHelper.SimplyCreateJob<UpdateEsiTokens>(Scheduler, 
-                "update_esi_token", x => x.RepeatForever().WithIntervalInMinutes(10));
-            
-            await QuartzJobHelper.SimplyCreateJob<UpdateCharactersAffiliation>(Scheduler,
-                "update_character_affiliation", x => x.RepeatForever().WithIntervalInMinutes(5));
-            
-            await QuartzJobHelper.SimplyCreateJob<UpdateCorporations>(Scheduler,
-                "update_corporations", x => x.RepeatForever().WithIntervalInHours(1));
+            try
+            {
+                Log.Information("Starting worker host");
+
+                await CreateHostBuilder(args).Build().RunAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Host terminated unexpectedly");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+        }
+
+        public IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args).UseSerilog().ConfigureServices(ConfigureServices);
+        }
+
+        private void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton(_settings);
+
+            services.AddQuartz(q =>
+            {
+                var update_esi_token = new JobKey("update_esi_token", "startup");
+                q.AddJob<UpdateEsiTokens>(update_esi_token);
+                q.AddTrigger(t =>
+                    t.WithIdentity("update_esi_token_trigger")
+                     .ForJob(update_esi_token)
+                     .StartNow()
+                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(15))
+                );
+
+                var update_character_affiliation = new JobKey("update_character_affiliation", "startup");
+                q.AddJob<UpdateCharactersAffiliation>(update_character_affiliation);
+                q.AddTrigger(t =>
+                    t.WithIdentity("update_character_affiliation_trigger")
+                     .ForJob(update_character_affiliation)
+                     .StartNow()
+                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(5))
+                );
+
+                var update_corporations = new JobKey("update_corporations", "startup");
+                q.AddJob<UpdateCorporations>(update_corporations);
+                q.AddTrigger(t =>
+                    t.WithIdentity("update_corporations_trigger")
+                     .ForJob(update_corporations)
+                     .StartNow()
+                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInHours(2))
+                );
+
+                q.UseMicrosoftDependencyInjectionJobFactory();
+            });
+
+            services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; });
         }
     }
 }

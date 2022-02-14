@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Leviathan.Core.Models.Options;
 using Leviathan.Core.Localization;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Events;
 
@@ -51,25 +52,23 @@ namespace Leviathan.Web
 
     public class Startup
     {
-        public IConfiguration Configuration { get; }
+        public Settings Settings { get; }
         public IWebHostEnvironment IWebHostEnvironment { get; }
         private string _dataSource;
 
-        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
+        public Startup(IWebHostEnvironment environment)
         {
             IWebHostEnvironment = environment;
-            Configuration = LeviathanSettings.GetSettingsFile();
-            _dataSource = LeviathanSettings.GetDatabaseFile(Configuration);
+            Settings = LeviathanSettings.GetSettingsFile();
+            _dataSource = LeviathanSettings.GetDatabaseFile(Settings);
             
-            var botConfigSettings = Configuration.GetSection("BotConfig");
-            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
-            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(Settings.BotConfig.Language);
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(Settings.BotConfig.Language);
         }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<DiscordConfigOptions>(Configuration.GetSection("DiscordConfig"));
-            services.Configure<EsiConfig>(Configuration.GetSection("ESIConfig"));
+            services.AddSingleton(Settings);
             services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={_dataSource};"));
             services.AddDbContext<MemoryContext>(opt => opt.UseInMemoryDatabase("users"));
             services.AddRazorPages();

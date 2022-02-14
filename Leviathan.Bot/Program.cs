@@ -20,14 +20,15 @@ using Quartz.Impl;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
+using DiscordConfig = Leviathan.Core.Models.Options.DiscordConfig;
 using IScheduler = Quartz.IScheduler;
 
 namespace Leviathan.Bot
 {
     public class Program
     {
-        public static DiscordConfigOptions DiscordConfigOptions { get; set; } = new DiscordConfigOptions();
-        public static BotConfigOptions BotConfigOptions { get; set; } = new BotConfigOptions();
+        public static DiscordConfig DiscordConfig { get; set; } = new DiscordConfig();
+        public static BotConfig BotConfig { get; set; } = new BotConfig();
         public static DiscordSocketClient DiscordSocketClient { get; set; } = null!;
         private InteractionService _commands;
         private IScheduler _scheduler;
@@ -35,19 +36,17 @@ namespace Leviathan.Bot
         private ServiceProvider ConfigureServices()
         {
             var config = LeviathanSettings.GetSettingsFile();
-            config.GetSection("DiscordConfig").Bind(DiscordConfigOptions);
-            config.GetSection("BotConfig").Bind(BotConfigOptions);
-            var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
-
-            log.Information($"Settings dump: {JsonConvert.SerializeObject(BotConfigOptions)}");
+            DiscordConfig = config.DiscordConfig;
+            BotConfig = config.BotConfig;
             
-            var botConfigSettings = config.GetSection("BotConfig");
-            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
-            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(botConfigSettings["Language"]);
+            var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
+            
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(BotConfig.Language);
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(BotConfig.Language);
 
             var services = new ServiceCollection();
-            services.AddSingleton(DiscordConfigOptions);
-            services.AddSingleton(BotConfigOptions);
+            services.AddSingleton(DiscordConfig);
+            services.AddSingleton(BotConfig);
             services.AddSingleton(log);
             services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={LeviathanSettings.GetDatabaseFile(config)};"));
             services.AddSingleton(new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All }));
@@ -74,7 +73,7 @@ namespace Leviathan.Bot
                 client.UserJoined += ClientOnUserJoined;
                 client.Ready += async () =>
                 {
-                    await _commands.RegisterCommandsToGuildAsync(DiscordConfigOptions.ServerGuildId);
+                    await _commands.RegisterCommandsToGuildAsync(DiscordConfig.ServerGuildId);
 
                     //TODO high: move quartz to dependency injection
                     _scheduler = await new StdSchedulerFactory().GetScheduler();
@@ -82,7 +81,7 @@ namespace Leviathan.Bot
                     await CreateStartupJobs();
                 };
 
-                await client.LoginAsync(TokenType.Bot, DiscordConfigOptions.BotToken);
+                await client.LoginAsync(TokenType.Bot, DiscordConfig.BotToken);
                 await client.StartAsync();
                 await services.GetRequiredService<CommandHandler>().InitializeAsync();
 
@@ -92,29 +91,29 @@ namespace Leviathan.Bot
 
         private async Task ClientOnUserJoined(SocketGuildUser arg)
         {
-            if (BotConfigOptions.WelcomeMessageEnabled &&
-                BotConfigOptions.WelcomeMessageChannelId is not 0 &&
-                !string.IsNullOrEmpty(BotConfigOptions.WelcomeMessage))
+            if (BotConfig.WelcomeMessageEnabled &&
+                BotConfig.WelcomeMessageChannelId is not 0 &&
+                !string.IsNullOrEmpty(BotConfig.WelcomeMessage))
             {
-                var discordServerGuild = DiscordSocketClient.GetGuild(DiscordConfigOptions.ServerGuildId);
+                var discordServerGuild = DiscordSocketClient.GetGuild(DiscordConfig.ServerGuildId);
 
                 if (discordServerGuild is null)
                 {
-                    Log.Error($"Server guild with id: {DiscordConfigOptions.ServerGuildId} not found");
+                    Log.Error($"Server guild with id: {DiscordConfig.ServerGuildId} not found");
                 }
 
-                var discordChannel = await DiscordSocketClient.GetChannelAsync(BotConfigOptions.WelcomeMessageChannelId);
+                var discordChannel = await DiscordSocketClient.GetChannelAsync(BotConfig.WelcomeMessageChannelId);
 
                 if (discordChannel is IMessageChannel msgChannel)
                 {
-                    var message = BotConfigOptions.WelcomeMessage
+                    var message = BotConfig.WelcomeMessage
                                                   .Replace("$user_mention", arg.Mention);
 
                     await msgChannel.SendMessageAsync(message);
                 }
                 else
                 {
-                    Log.Error($"Server welcome message channel with id: {BotConfigOptions.WelcomeMessageChannelId} not found");
+                    Log.Error($"Server welcome message channel with id: {BotConfig.WelcomeMessageChannelId} not found");
                 }
             }
         }

@@ -6,9 +6,11 @@ using ESI.NET.Models.SSO;
 using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Extensions;
 using Leviathan.Core.Models;
+using Leviathan.Core.Models.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Quartz;
 using Serilog;
@@ -18,6 +20,13 @@ namespace Leviathan.Jobs
     [DisallowConcurrentExecution]
     public class UpdateEsiTokens : IJob
     {
+        private Settings _settings;
+        
+        public UpdateEsiTokens(Settings settings)
+        {
+            _settings = settings;
+        }
+        
         public async Task Execute(IJobExecutionContext context)
         {
             using var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
@@ -30,8 +39,8 @@ namespace Leviathan.Jobs
                 {
                     var characters = sqliteContext.Characters.Where(x => !string.IsNullOrEmpty(x.EsiTokenAccessToken) &&
                                                                          !string.IsNullOrEmpty(x.EsiTokenRefreshToken));
-
-                    var esiClient = new EsiClient(Program.EsiConfigOptions);
+                    
+                    var esiClient = new EsiClient(Options.Create(_settings.ESIConfig));
                     foreach (var character in characters)
                     {
                         log.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
