@@ -3,6 +3,7 @@ using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Extensions;
 using Leviathan.Core.Models.Options;
 using Leviathan.Jobs;
+using Leviathan.Jobs.Schedule;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -28,12 +29,11 @@ namespace Leviathan
         {
             Log.Logger = new LoggerConfiguration()
                          .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                         .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
-                         .MinimumLevel.Override("Quartz.Core.QuartzScheduler", LogEventLevel.Warning)
+                         .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
                          .Enrich.FromLogContext()
                          .WriteTo.Console()
                          .CreateLogger();
-            
+
             _settings = LeviathanSettings.GetSettingsFile();
 
             Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
@@ -44,7 +44,7 @@ namespace Leviathan
         {
             try
             {
-                Log.Information("Starting worker host");
+                Log.Information("Starting Leviathan.Worker host");
 
                 await CreateHostBuilder(args).Build().RunAsync();
             }
@@ -70,31 +70,31 @@ namespace Leviathan
             services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={_settings.DatabaseConfig.ConnectionString};"));
             services.AddQuartz(q =>
             {
-                var update_esi_token = new JobKey("update_esi_token", "startup");
-                q.AddJob<UpdateEsiTokens>(update_esi_token);
+                var update_esi_tokens = new JobKey("update_esi_token", "schedule");
+                q.AddJob<ScheduleUpdateEsiToken>(update_esi_tokens);
                 q.AddTrigger(t =>
                     t.WithIdentity("update_esi_token_trigger")
-                     .ForJob(update_esi_token)
-                     .StartNow()
-                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(15))
-                );
-
-                var update_character_affiliation = new JobKey("update_character_affiliation", "startup");
-                q.AddJob<UpdateCharactersAffiliation>(update_character_affiliation);
-                q.AddTrigger(t =>
-                    t.WithIdentity("update_character_affiliation_trigger")
-                     .ForJob(update_character_affiliation)
+                     .ForJob(update_esi_tokens)
                      .StartNow()
                      .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(5))
                 );
-
-                var update_corporations = new JobKey("update_corporations", "startup");
-                q.AddJob<UpdateCorporations>(update_corporations);
+                
+                var update_characters = new JobKey("update_characters", "startup");
+                q.AddJob<StartupUpdateCharacters>(update_characters);
                 q.AddTrigger(t =>
-                    t.WithIdentity("update_corporations_trigger")
+                    t.WithIdentity("update_characters_trigger")
+                     .ForJob(update_characters)
+                     .StartNow()
+                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(5))
+                );
+                
+                var update_corporations = new JobKey("update_corporation", "schedule");
+                q.AddJob<ScheduleUpdateCorporation>(update_corporations);
+                q.AddTrigger(t =>
+                    t.WithIdentity("update_corporation_trigger")
                      .ForJob(update_corporations)
                      .StartNow()
-                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInHours(2))
+                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(5))
                 );
 
                 q.UseMicrosoftDependencyInjectionJobFactory();

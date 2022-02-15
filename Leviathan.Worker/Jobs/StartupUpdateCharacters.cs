@@ -9,13 +9,13 @@ using Serilog;
 namespace Leviathan.Jobs
 {
     [DisallowConcurrentExecution]
-    public class UpdateCharactersAffiliation : IJob
+    public class StartupUpdateCharacters : IJob
     {
         private SqliteContext _sqliteContext;
         private ILogger _logger;
         private Settings _settings;
 
-        public UpdateCharactersAffiliation(SqliteContext sqliteContext, ILogger logger, Settings settings)
+        public StartupUpdateCharacters(SqliteContext sqliteContext, ILogger logger, Settings settings)
         {
             _sqliteContext = sqliteContext;
             _logger = logger;
@@ -24,7 +24,7 @@ namespace Leviathan.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.Information("Job update_character_affiliation started");
+            _logger.Information($"Job {context.JobDetail.Key} started");
 
             if (await _sqliteContext.Characters.AnyAsync())
             {
@@ -32,7 +32,7 @@ namespace Leviathan.Jobs
                                                           .Where(x => x.EsiCharacterID > 0 && !string.IsNullOrEmpty(x.EsiTokenAccessToken))
                                                           .Select(x => x.EsiCharacterID).ToListAsync();
 
-                _logger.Information($"Job update_character_affiliation job characters count: {characterIdList.Count}");
+                _logger.Information($"Job {context.JobDetail.Key} job characters count: {characterIdList.Count}");
 
                 //TODO: add chunking, possible max ids restriction according https://esi.evetech.net/ui/#/Character/post_characters_affiliation
                 var affiliationEsiResponse = await new EsiClient(_settings.ESIConfig).Character.Affiliation(characterIdList.ToArray());
@@ -53,7 +53,7 @@ namespace Leviathan.Jobs
                 await _sqliteContext.SaveChangesAsync();
             }
 
-            _logger.Information("Job update_character_affiliation finished");
+            _logger.Information($"Job {context.JobDetail.Key} finished");
         }
     }
 }

@@ -19,8 +19,8 @@ namespace Leviathan.Core.Models.Database
         [Column("esi_sso_access_token")]
         public string EsiTokenAccessToken { get; set; } = string.Empty;
         
-        [Column("esi_sso_expires_in")]
-        public int EsiTokenExpiresIn { get; set; }
+        [Column("esi_sso_expires_on")]
+        public DateTime EsiTokenExpiresOn { get; set; }
 
         [Column("esi_sso_refresh_token")]
         public string EsiTokenRefreshToken { get; set; }  = string.Empty;

@@ -51,7 +51,7 @@ namespace Leviathan.Core.Controllers
                     user.EsiCharacterID = authorizedCharacter.CharacterID;
                     user.EsiCorporationID = authorizedCharacter.CorporationID;
                     user.EsiTokenAccessToken = authorizedCharacter.Token;
-                    user.EsiTokenExpiresIn = esiToken.ExpiresIn;
+                    user.EsiTokenExpiresOn = DateTime.UtcNow.AddSeconds(esiToken.ExpiresIn - 300);
                     user.EsiTokenRefreshToken = authorizedCharacter.RefreshToken;
                     user.EsiSsoStatus = true;
 
@@ -156,7 +156,7 @@ namespace Leviathan.Core.Controllers
                             oldUser.EsiAllianceID = user.EsiAllianceID;
                             oldUser.EsiCorporationID = user.EsiCorporationID;
                             oldUser.EsiTokenAccessToken = user.EsiTokenAccessToken;
-                            oldUser.EsiTokenExpiresIn = user.EsiTokenExpiresIn;
+                            oldUser.EsiTokenExpiresOn = user.EsiTokenExpiresOn;
                             oldUser.EsiTokenRefreshToken = user.EsiTokenRefreshToken;
                             oldUser.DiscordUserId = user.DiscordUserId;
                             oldUser.State = user.State;

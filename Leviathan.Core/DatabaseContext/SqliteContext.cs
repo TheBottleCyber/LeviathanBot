@@ -4,16 +4,17 @@ using Leviathan.Core.Extensions;
 using Leviathan.Core.Models.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+#pragma warning disable CS8618
 
 namespace Leviathan.Core.DatabaseContext
 {
+    [Obsolete("do not use, only for migrations")]
     public class SqliteContextFactory : IDesignTimeDbContextFactory<SqliteContext>
     {
         public SqliteContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<SqliteContext>();
-            var config = LeviathanSettings.GetSettingsFile();
-            optionsBuilder.UseSqlite(@$"DataSource={LeviathanSettings.GetDatabaseFile(config)};");
+            optionsBuilder.UseSqlite(@$"DataSource=localMigration.db;");
 
             return new SqliteContext(optionsBuilder.Options);
         }

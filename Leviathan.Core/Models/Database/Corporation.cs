@@ -21,6 +21,9 @@ namespace Leviathan.Core.Models.Database
         
         [Column("ticker")]
         public string Ticker { get; set; }
+        
+        [Column("expires_on")]
+        public DateTime ExpiresOn { get; set; }
 
         public Corporation()
         {
@@ -33,6 +36,7 @@ namespace Leviathan.Core.Models.Database
             Name = name;
             CorporationId = corporationId;
             Ticker = ticker;
+            ExpiresOn = DateTime.UtcNow.AddHours(1);
         }
     }
 }
