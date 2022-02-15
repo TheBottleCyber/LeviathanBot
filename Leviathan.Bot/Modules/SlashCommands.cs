@@ -1,7 +1,5 @@
-using System;
 using System.Diagnostics;
 using System.Text;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Leviathan.Bot.Services;
@@ -9,23 +7,23 @@ using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Localization;
 using Leviathan.Core.Models.Options;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace Leviathan.Bot.Modules
 {
     public class SlashCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        public InteractionService Commands { get; set; } = null!;
         private CommandHandler _handler;
-        private BotConfig _botConfig;
+        private Settings _settings;
         private SqliteContext _sqliteContext;
 
-        public SlashCommands(CommandHandler handler, BotConfig botConfig, SqliteContext sqliteContext)
+        public SlashCommands(CommandHandler handler, SqliteContext sqliteContext, Settings settings)
         {
             _handler = handler;
-            _botConfig = botConfig;
             _sqliteContext = sqliteContext;
+            _settings = settings;
         }
+
+        public InteractionService Commands { get; set; } = null!;
 
         [SlashCommand("about", "about bot")]
         public async Task About()
@@ -45,7 +43,7 @@ namespace Leviathan.Bot.Modules
             var devLocalizedString = LocalizationHelper.GetLocalizedString("Developer");
             var inGameNickLocalizedString = LocalizationHelper.GetLocalizedString("DiscordAboutCommandInGameNick");
 
-            await RespondAsync($"Leviathan v1.0.4 - EVE Online Discord Bot\n" +
+            await RespondAsync("Leviathan v1.0.5 - EVE Online Discord Bot\n" +
                                $"{devLocalizedString}: TheBottle ({inGameNickLocalizedString} The Bottle)\n\n" +
                                $"{runTimeLocalizedString} {stringDate}");
         }
@@ -59,7 +57,7 @@ namespace Leviathan.Bot.Modules
         [SlashCommand("ping", "ping all listed peoples")]
         public async Task Ping()
         {
-            var peoplesToPing = _botConfig.PingCommandPeoples;
+            var peoplesToPing = _settings.BotConfig.PingCommandPeoples;
 
             if (peoplesToPing is not null && peoplesToPing.Count > 0)
             {
@@ -70,15 +68,11 @@ namespace Leviathan.Bot.Modules
 
                 var mentionString = new StringBuilder();
                 if (discordIdsToPing is not null && discordIdsToPing.Count > 0)
-                {
                     foreach (var id in discordIdsToPing)
-                    {
                         mentionString.Append($"{MentionUtils.MentionUser(id)} ");
-                    }
-                }
 
                 if (mentionString.Length > 0)
-                    await RespondAsync($"{mentionString}{_botConfig.PingCommandMessage}");
+                    await RespondAsync($"{mentionString}{_settings.BotConfig.PingCommandMessage}");
             }
         }
     }

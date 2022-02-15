@@ -1,7 +1,9 @@
 ﻿using System.Globalization;
+using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Extensions;
 using Leviathan.Core.Models.Options;
 using Leviathan.Jobs;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Quartz;
@@ -24,16 +26,18 @@ namespace Leviathan
 
         public Startup()
         {
+            Log.Logger = new LoggerConfiguration()
+                         .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                         .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+                         .MinimumLevel.Override("Quartz.Core.QuartzScheduler", LogEventLevel.Warning)
+                         .Enrich.FromLogContext()
+                         .WriteTo.Console()
+                         .CreateLogger();
+            
             _settings = LeviathanSettings.GetSettingsFile();
 
             Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
             Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
-
-            Log.Logger = new LoggerConfiguration()
-                         .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                         .Enrich.FromLogContext()
-                         .WriteTo.Console()
-                         .CreateLogger();
         }
 
         public async Task Start(string[] args)
@@ -62,7 +66,8 @@ namespace Leviathan
         private void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(_settings);
-
+            services.AddSingleton(Log.Logger);
+            services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={_settings.DatabaseConfig.ConnectionString};"));
             services.AddQuartz(q =>
             {
                 var update_esi_token = new JobKey("update_esi_token", "startup");

@@ -22,6 +22,7 @@ namespace Leviathan.Web
         {
             Log.Logger = new LoggerConfiguration()
                          .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                         .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning) 
                          .Enrich.FromLogContext()
                          .WriteTo.Console()
                          .CreateLogger();
@@ -51,13 +52,11 @@ namespace Leviathan.Web
     public class Startup
     {
         private Settings _settings;
-        private string _dataSource;
-        
+
         public Startup(IWebHostEnvironment environment)
         {
             _settings = LeviathanSettings.GetSettingsFile();
-            _dataSource = LeviathanSettings.GetDatabaseFile(_settings);
-            
+
             Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
             Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
         }
@@ -65,7 +64,7 @@ namespace Leviathan.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(_settings);
-            services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={_dataSource};"));
+            services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={_settings.DatabaseConfig.ConnectionString};"));
             services.AddDbContext<MemoryContext>(opt => opt.UseInMemoryDatabase("users"));
             services.AddRazorPages();
         }

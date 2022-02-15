@@ -1,17 +1,9 @@
-using System.Reflection;
 using ESI.NET;
 using ESI.NET.Enumerations;
-using ESI.NET.Models.Character;
-using ESI.NET.Models.SSO;
 using Leviathan.Core.DatabaseContext;
-using Leviathan.Core.Extensions;
-using Leviathan.Core.Models;
 using Leviathan.Core.Models.Options;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Quartz;
 using Serilog;
 
@@ -20,82 +12,81 @@ namespace Leviathan.Jobs
     [DisallowConcurrentExecution]
     public class UpdateEsiTokens : IJob
     {
+        private SqliteContext _sqliteContext;
+        private ILogger _logger;
         private Settings _settings;
-        
-        public UpdateEsiTokens(Settings settings)
+
+        public UpdateEsiTokens(SqliteContext sqliteContext, ILogger logger, Settings settings)
         {
+            _sqliteContext = sqliteContext;
+            _logger = logger;
             _settings = settings;
         }
-        
+
         public async Task Execute(IJobExecutionContext context)
         {
-            using var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
+            _logger.Information($"Job update_esi_tokens started");
 
-            log.Information($"Job update_esi_tokens started");
-
-            await using (var sqliteContext = new SqliteContext())
+            if (await _sqliteContext.Characters.AnyAsync())
             {
-                if (await sqliteContext.Characters.AnyAsync())
+                var characters = _sqliteContext.Characters.Where(x => !string.IsNullOrEmpty(x.EsiTokenAccessToken) &&
+                                                                      !string.IsNullOrEmpty(x.EsiTokenRefreshToken));
+
+                var esiClient = new EsiClient(Options.Create(_settings.ESIConfig));
+                foreach (var character in characters)
                 {
-                    var characters = sqliteContext.Characters.Where(x => !string.IsNullOrEmpty(x.EsiTokenAccessToken) &&
-                                                                         !string.IsNullOrEmpty(x.EsiTokenRefreshToken));
-                    
-                    var esiClient = new EsiClient(Options.Create(_settings.ESIConfig));
-                    foreach (var character in characters)
-                    {
-                        log.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
+                    _logger.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
                                         $" with character_id: {character.EsiCharacterID} token update started");
 
-                        try
+                    try
+                    {
+                        var token = await esiClient.SSO.GetToken(GrantType.RefreshToken, character.EsiTokenRefreshToken);
+                        if (!string.IsNullOrEmpty(token.AccessToken) && !string.IsNullOrEmpty(token.RefreshToken))
                         {
-                            var token = await esiClient.SSO.GetToken(GrantType.RefreshToken, character.EsiTokenRefreshToken);
-                            if (!string.IsNullOrEmpty(token.AccessToken) && !string.IsNullOrEmpty(token.RefreshToken))
-                            {
-                                character.EsiTokenAccessToken = token.AccessToken;
-                                character.EsiTokenExpiresIn = token.ExpiresIn;
-                                character.EsiTokenRefreshToken = token.RefreshToken;
+                            character.EsiTokenAccessToken = token.AccessToken;
+                            character.EsiTokenExpiresIn = token.ExpiresIn;
+                            character.EsiTokenRefreshToken = token.RefreshToken;
 
-                                character.EsiSsoStatus = true;
-                                
-                                log.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
+                            character.EsiSsoStatus = true;
+
+                            _logger.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
                                                 $" with character_id: {character.EsiCharacterID} token is valid");
-                            }
                         }
-                        catch (ArgumentException argumentException)
-                        {
-                            character.EsiSsoStatus = false;
-                            
-                            if (argumentException.Message == "Invalid refresh token. Token missing/expired.")
-                            {
-                                log.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
-                                                $" with character_id: {character.EsiCharacterID} token missing/expired");
-                            }
-                            else if (argumentException.Message == "Invalid refresh token. Character grant missing/expired.")
-                            {
-                                log.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
-                                                $" with character_id: {character.EsiCharacterID} token grant missing/expired.");
-                            }
-                            else
-                            {
-                                log.Error(argumentException, "Unhandled exception at job update_esi_tokens at" +
-                                                             $" character_name: {character.EsiCharacterName} with character_id: {character.EsiCharacterID}");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            log.Error(ex, "Unhandled exception at job update_esi_tokens at" +
-                                          $" character_name: {character.EsiCharacterName} with character_id: {character.EsiCharacterID}");
-                        }
+                    }
+                    catch (ArgumentException argumentException)
+                    {
+                        character.EsiSsoStatus = false;
 
-                        log.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
-                                        $" with character_id: {character.EsiCharacterID} token update finished");
+                        if (argumentException.Message == "Invalid refresh token. Token missing/expired.")
+                        {
+                            _logger.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
+                                                $" with character_id: {character.EsiCharacterID} token missing/expired");
+                        }
+                        else if (argumentException.Message == "Invalid refresh token. Character grant missing/expired.")
+                        {
+                            _logger.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
+                                                $" with character_id: {character.EsiCharacterID} token grant missing/expired.");
+                        }
+                        else
+                        {
+                            _logger.Error(argumentException, "Unhandled exception at job update_esi_tokens at" +
+                                                             $" character_name: {character.EsiCharacterName} with character_id: {character.EsiCharacterID}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex, "Unhandled exception at job update_esi_tokens at" +
+                                          $" character_name: {character.EsiCharacterName} with character_id: {character.EsiCharacterID}");
                     }
 
-                    await sqliteContext.SaveChangesAsync();
+                    _logger.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
+                                        $" with character_id: {character.EsiCharacterID} token update finished");
                 }
+
+                await _sqliteContext.SaveChangesAsync();
             }
 
-            log.Information($"Job update_esi_tokens finised");
+            _logger.Information($"Job update_esi_tokens finised");
         }
     }
 }

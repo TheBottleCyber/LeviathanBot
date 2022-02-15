@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
+using Discord.Net;
 using Discord.WebSocket;
 using Leviathan.Core.DatabaseContext;
-using Leviathan.Core.Models.Database;
+using Leviathan.Core.Models.Options;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using Quartz;
 using Serilog;
 
@@ -17,174 +12,175 @@ namespace Leviathan.Bot.Jobs
     [DisallowConcurrentExecution]
     public class UpdateDiscordRoles : IJob
     {
+        private SqliteContext _sqliteContext;
+        private ILogger _logger;
+        private Settings _settings;
+        private DiscordSocketClient _discordSocketClient;
+
+        public UpdateDiscordRoles(SqliteContext sqliteContext, ILogger logger, Settings settings, DiscordSocketClient discordSocketClient)
+        {
+            _sqliteContext = sqliteContext;
+            _logger = logger;
+            _settings = settings;
+            _discordSocketClient = discordSocketClient;
+        }
+
         public async Task Execute(IJobExecutionContext context)
         {
-            var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
-
-            log.Information("Job update_discord_roles started");
-            var discordServerGuild = Program.DiscordSocketClient.GetGuild(Program.DiscordConfig.ServerGuildId);
+            _logger.Information("Job update_discord_roles started");
+            
+            var discordServerGuild = _discordSocketClient.GetGuild(_settings.DiscordConfig.ServerGuildId);
 
             if (discordServerGuild is not null)
             {
                 await discordServerGuild.DownloadUsersAsync();
 
-                await using (var sqliteContext = new SqliteContext())
+                foreach (var discordUser in discordServerGuild.Users.Where(x => !x.IsBot))
                 {
-                    foreach (var discordUser in discordServerGuild.Users.Where(x => !x.IsBot))
+                    var character = await _sqliteContext.Characters.FirstOrDefaultAsync(x => x.DiscordUserId == discordUser.Id);
+
+                    if (character is not null)
                     {
-                        // try
-                        // {
-                            var character = await sqliteContext.Characters.FirstOrDefaultAsync(x => x.DiscordUserId == discordUser.Id);
+                        var corporation = await _sqliteContext.Corporations.FirstOrDefaultAsync(x => x.CorporationId == character.EsiCorporationID);
+                        var alliance = await _sqliteContext.Alliances.FirstOrDefaultAsync(x => x.AllianceId == character.EsiAllianceID);
 
-                            if (character is not null)
+                        var listRoles = new Dictionary<string, bool>();
+                        foreach (var authGroup in _settings.BotConfig.AuthGroups)
+                        {
+                            bool assigmentBoolean = false;
+
+                            if (authGroup.AllowedCharacters is not null && authGroup.AllowedCharacters.Count > 0 &&
+                                authGroup.AllowedCharacters.Contains(character.EsiCharacterName))
                             {
-                                var corporation = await sqliteContext.Corporations.FirstOrDefaultAsync(x => x.CorporationId == character.EsiCorporationID);
-                                var alliance = await sqliteContext.Alliances.FirstOrDefaultAsync(x => x.AllianceId == character.EsiAllianceID);
+                                _logger.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
+                                                    $" matched character name: {character.EsiCharacterName}");
 
-                                var listRoles = new Dictionary<string, bool>();
-                                foreach (var authGroup in Program.BotConfig.AuthGroups)
+                                assigmentBoolean = true;
+                            }
+
+                            if (authGroup.AllowedCorporations is not null && authGroup.AllowedCorporations.Count > 0 &&
+                                corporation is not null &&
+                                authGroup.AllowedCorporations.Contains(corporation.Ticker))
+                            {
+                                _logger.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
+                                                    $" matched corporation ticker: {corporation.Ticker}");
+
+                                assigmentBoolean = true;
+                            }
+
+                            if (authGroup.AllowedAlliances is not null && authGroup.AllowedAlliances.Count > 0 &&
+                                alliance is not null &&
+                                authGroup.AllowedAlliances.Contains(alliance.Ticker))
+                            {
+                                _logger.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
+                                                    $" matched alliance ticker: {alliance.Ticker}");
+
+                                assigmentBoolean = true;
+                            }
+
+                            if (_settings.BotConfig.RemoveRolesIfTokenIsInvalid &&
+                                !character.EsiSsoStatus)
+                            {
+                                _logger.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
+                                                    $" esi token invalid, removing roles");
+
+                                assigmentBoolean = false;
+                            }
+
+                            foreach (var role in authGroup.DiscordRoles)
+                            {
+                                listRoles.Add(role, assigmentBoolean);
+                            }
+                        }
+                        
+                        var discordUserRoles = discordUser.Roles;
+                        var discordGuildRoles = discordServerGuild.Roles;
+
+                        if (discordUserRoles is not null && discordGuildRoles is not null)
+                        {
+                            foreach (var role in listRoles)
+                            {
+                                var discordUserRole = discordUserRoles.FirstOrDefault(x => x.Name == role.Key);
+                                var discordGuildRole = discordGuildRoles.FirstOrDefault(x => x.Name == role.Key);
+
+                                if (discordGuildRole is not null)
                                 {
-                                    bool assigmentBoolean = false;
-
-                                    if (authGroup.AllowedCharacters is not null && authGroup.AllowedCharacters.Count > 0 &&
-                                        authGroup.AllowedCharacters.Contains(character.EsiCharacterName))
+                                    if (discordUserRole is null)
                                     {
-                                        log.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
-                                                        $" matched character name: {character.EsiCharacterName}");
+                                        if (role.Value)
+                                        {
+                                            _logger.Information($"Job update_discord_roles adding role {discordGuildRole.Name} at user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}");
 
-                                        assigmentBoolean = true;
+                                            await discordUser.AddRoleAsync(discordGuildRole, RequestOptions.Default);
+                                        }
                                     }
-
-                                    if (authGroup.AllowedCorporations is not null && authGroup.AllowedCorporations.Count > 0 &&
-                                        corporation is not null &&
-                                        authGroup.AllowedCorporations.Contains(corporation.Ticker))
+                                    else
                                     {
-                                        log.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
-                                                        $" matched corporation ticker: {corporation.Ticker}");
+                                        if (!role.Value)
+                                        {
+                                            _logger.Information($"Job update_discord_roles removing role {discordGuildRole.Name} at user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}");
 
-                                        assigmentBoolean = true;
-                                    }
-
-                                    if (authGroup.AllowedAlliances is not null && authGroup.AllowedAlliances.Count > 0 &&
-                                        alliance is not null &&
-                                        authGroup.AllowedAlliances.Contains(alliance.Ticker))
-                                    {
-                                        log.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
-                                                        $" matched alliance ticker: {alliance.Ticker}");
-
-                                        assigmentBoolean = true;
-                                    }
-
-                                    if (Program.BotConfig.RemoveRolesIfTokenIsInvalid &&
-                                        !character.EsiSsoStatus)
-                                    {
-                                        log.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
-                                                        $" esi token invalid, removing roles");
-
-                                        assigmentBoolean = false;
-                                    }
-
-                                    foreach (var role in authGroup.DiscordRoles)
-                                    {
-                                        listRoles.Add(role, assigmentBoolean);
+                                            await discordUser.RemoveRoleAsync(discordGuildRole, RequestOptions.Default);
+                                        }
                                     }
                                 }
-
-
-                                var discordUserRoles = discordUser.Roles;
-                                var discordGuildRoles = discordServerGuild.Roles;
-
-                                if (discordUserRoles is not null && discordGuildRoles is not null)
+                                else
                                 {
-                                    foreach (var role in listRoles)
+                                    _logger.Error($"Job update_discord_roles role with name: {role.Key} not found");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (_settings.BotConfig.RemoveRolesIfTokenIsInvalid)
+                        {
+                            var overAllConfigRoles = new List<string>();
+
+                            foreach (var authGroup in _settings.BotConfig.AuthGroups)
+                            {
+                                overAllConfigRoles.AddRange(authGroup.DiscordRoles);
+                            }
+
+                            var allRolesDefined = new List<IRole>();
+                            foreach (var role in discordServerGuild.Roles)
+                            {
+                                if (overAllConfigRoles.Contains(role.Name))
+                                {
+                                    allRolesDefined.Add(role);
+                                }
+                            }
+
+                            if (allRolesDefined.Count > 0)
+                            {
+                                foreach (var role in allRolesDefined.Where(role => discordUser.Roles.Contains(role)))
+                                {
+                                    try
                                     {
-                                        var discordUserRole = discordUserRoles.FirstOrDefault(x => x.Name == role.Key);
-                                        var discordGuildRole = discordGuildRoles.FirstOrDefault(x => x.Name == role.Key);
+                                        _logger.Information($"Job update_discord_roles try remove role \"{role.Name}\" at user: " +
+                                                            $"{discordUser.Username}#{discordUser.DiscriminatorValue}");
 
-                                        if (discordGuildRole is not null)
-                                        {
-                                            if (discordUserRole is null)
-                                            {
-                                                if (role.Value)
-                                                {
-                                                    log.Information($"Job update_discord_roles adding role {discordGuildRole.Name} at user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}");
+                                        await discordUser.RemoveRoleAsync(role);
 
-                                                    await discordUser.AddRoleAsync(discordGuildRole, RequestOptions.Default);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (!role.Value)
-                                                {
-                                                    log.Information($"Job update_discord_roles removing role {discordGuildRole.Name} at user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}");
-
-                                                    await discordUser.RemoveRoleAsync(discordGuildRole, RequestOptions.Default);
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            log.Error($"Job update_discord_roles role with name: {role.Key} not found");
-                                        }
+                                        _logger.Information($"Job update_discord_roles remove role \"{role.Name}\" at user: " +
+                                                            $"{discordUser.Username}#{discordUser.DiscriminatorValue} success");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.Error(ex, "Job update_discord_roles unhandled exception");
                                     }
                                 }
                             }
-                            else
-                            {
-                                if (Program.BotConfig.RemoveRolesIfTokenIsInvalid)
-                                {
-                                    var overAllConfigRoles = new List<string>();
-
-                                    foreach (var authGroup in Program.BotConfig.AuthGroups)
-                                    {
-                                        overAllConfigRoles.AddRange(authGroup.DiscordRoles);
-                                    }
-
-                                    var allRolesDefined = new List<IRole>();
-                                    foreach (var role in discordServerGuild.Roles)
-                                    {
-                                        if (overAllConfigRoles.Contains(role.Name))
-                                        {
-                                            allRolesDefined.Add(role);
-                                        }
-                                    }
-
-                                    if (allRolesDefined.Count > 0)
-                                    {
-                                        foreach (var role in allRolesDefined.Where(role => discordUser.Roles.Contains(role)))
-                                        {
-                                            try
-                                            {
-                                                log.Information($"Job update_discord_roles try remove role \"{role.Name}\" at user: " +
-                                                                $"{discordUser.Username}#{discordUser.DiscriminatorValue}");
-
-                                                await discordUser.RemoveRoleAsync(role);
-
-                                                log.Information($"Job update_discord_roles remove role \"{role.Name}\" at user: " +
-                                                                $"{discordUser.Username}#{discordUser.DiscriminatorValue} success");
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                log.Error(ex, "Job update_discord_roles unhandled exception");
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        // }
-                        // catch (Exception ex)
-                        // {
-                        //     log.Error(ex, $"Job update_discord_roles unhandled");
-                        // }
+                        }
                     }
                 }
             }
             else
             {
-                log.Error($"Job update_discord_roles server guild with id: {Program.DiscordConfig.ServerGuildId} not found");
+                _logger.Error($"Job update_discord_roles server guild with id: {_settings.DiscordConfig.ServerGuildId} not found");
             }
 
-            log.Information("Job update_discord_roles finished");
+            _logger.Information("Job update_discord_roles finished");
         }
     }
 }

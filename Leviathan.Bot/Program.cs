@@ -1,8 +1,4 @@
-﻿using System;
-using System.Configuration;
-using System.Globalization;
-using System.Reactive.Concurrency;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -12,119 +8,155 @@ using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Extensions;
 using Leviathan.Core.Models.Options;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Hosting;
 using Quartz;
-using Quartz.Impl;
 using Serilog;
-using Serilog.Core;
 using Serilog.Events;
-using DiscordConfig = Leviathan.Core.Models.Options.DiscordConfig;
-using IScheduler = Quartz.IScheduler;
 
 namespace Leviathan.Bot
 {
     public class Program
     {
-        public static DiscordConfig DiscordConfig { get; set; } = new DiscordConfig();
-        public static BotConfig BotConfig { get; set; } = new BotConfig();
-        public static DiscordSocketClient DiscordSocketClient { get; set; } = null!;
-        private InteractionService _commands;
-        private IScheduler _scheduler;
-
-        private ServiceProvider ConfigureServices()
+        public static async Task Main(string[] args)
         {
-            var config = LeviathanSettings.GetSettingsFile();
-            DiscordConfig = config.DiscordConfig;
-            BotConfig = config.BotConfig;
-            
-            var log = new LoggerConfiguration().WriteTo.Console().CreateLogger();
-            
-            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(BotConfig.Language);
-            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(BotConfig.Language);
-
-            var services = new ServiceCollection();
-            services.AddSingleton(DiscordConfig);
-            services.AddSingleton(BotConfig);
-            services.AddSingleton(log);
-            services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={LeviathanSettings.GetDatabaseFile(config)};"));
-            services.AddSingleton(new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All }));
-            services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
-            services.AddSingleton<CommandHandler>();
-
-            return services.BuildServiceProvider();
+            await new Startup().Start(args);
         }
+    }
 
-        public static Task Main(string[] args) => new Program().Start(args);
+    public class Startup
+    {
+        private Settings _settings;
+        private DiscordSocketClient _discordSocketClient = null!;
+
+        public Startup()
+        {
+            Log.Logger = new LoggerConfiguration()
+                         .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                         .MinimumLevel.Override("Quartz.Core.QuartzScheduler", LogEventLevel.Warning)
+                         .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+                         .Enrich.FromLogContext()
+                         .WriteTo.Console()
+                         .CreateLogger();
+
+            _settings = LeviathanSettings.GetSettingsFile();
+
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(_settings.BotConfig.Language);
+        }
 
         public async Task Start(string[] args)
         {
-            await using (var services = ConfigureServices())
+            try
             {
-                var client = services.GetRequiredService<DiscordSocketClient>();
-                var commands = services.GetRequiredService<InteractionService>();
-                Log.Logger = services.GetRequiredService<Logger>();
+                Log.Information("Starting bot host");
+                var delay = false;
 
-                DiscordSocketClient = client;
-                _commands = commands;
+                var builder = CreateHostBuilder(args).Build();
+                _discordSocketClient = builder.Services.GetRequiredService<DiscordSocketClient>();
+                await builder.Services.GetRequiredService<CommandHandler>().InitializeAsync();
 
-                client.Log += DiscordClientOnLog;
-                client.UserJoined += ClientOnUserJoined;
-                client.Ready += async () =>
+                _discordSocketClient.Log += DiscordClientOnLog;
+                _discordSocketClient.UserJoined += ClientOnUserJoined;
+                _discordSocketClient.Ready += async () =>
                 {
-                    await _commands.RegisterCommandsToGuildAsync(DiscordConfig.ServerGuildId);
-
-                    //TODO high: move quartz to dependency injection
-                    _scheduler = await new StdSchedulerFactory().GetScheduler();
-                    await _scheduler.Start();
-                    await CreateStartupJobs();
+                    delay = true;
+                    await builder.Services.GetRequiredService<InteractionService>()
+                                 .RegisterCommandsToGuildAsync(_settings.DiscordConfig.ServerGuildId);
                 };
 
-                await client.LoginAsync(TokenType.Bot, DiscordConfig.BotToken);
-                await client.StartAsync();
-                await services.GetRequiredService<CommandHandler>().InitializeAsync();
+                await _discordSocketClient.LoginAsync(TokenType.Bot, _settings.DiscordConfig.BotToken);
+                await _discordSocketClient.StartAsync();
 
-                await Task.Delay(Timeout.Infinite);
+                //TODO: fix this https://upload.wikimedia.org/wikipedia/commons/a/ab/Qabbayim.jpg
+                for (;;)
+                {
+                    if (delay)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        Thread.Sleep(50);
+                    }
+                }
+                
+                await builder.RunAsync();
             }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Host terminated unexpectedly");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+        }
+
+        public IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args).UseSerilog().ConfigureServices(ConfigureServices);
+        }
+
+        private void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton(_settings);
+            services.AddSingleton(Log.Logger);
+            services.AddDbContext<SqliteContext>(opt => opt.UseSqlite(@$"DataSource={_settings.DatabaseConfig.ConnectionString};"));
+            services.AddQuartz(q =>
+            {
+                var update_discord_names = new JobKey("update_discord_names", "startup");
+                q.AddJob<UpdateDiscordNames>(update_discord_names);
+                q.AddTrigger(t =>
+                    t.WithIdentity("update_discord_names_trigger")
+                     .ForJob(update_discord_names)
+                     .StartNow()
+                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(5))
+                );
+
+                var update_discord_roles = new JobKey("update_discord_roles", "startup");
+                q.AddJob<UpdateDiscordRoles>(update_discord_roles);
+                q.AddTrigger(t =>
+                    t.WithIdentity("update_discord_roles_trigger")
+                     .ForJob(update_discord_roles)
+                     .StartNow()
+                     .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(5))
+                );
+
+                q.UseMicrosoftDependencyInjectionJobFactory();
+            });
+
+            services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; });
+
+            services.AddSingleton(new DiscordSocketClient(new DiscordSocketConfig { GatewayIntents = GatewayIntents.All }));
+            services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
+            services.AddSingleton<CommandHandler>();
         }
 
         private async Task ClientOnUserJoined(SocketGuildUser arg)
         {
-            if (BotConfig.WelcomeMessageEnabled &&
-                BotConfig.WelcomeMessageChannelId is not 0 &&
-                !string.IsNullOrEmpty(BotConfig.WelcomeMessage))
+            if (_settings.BotConfig.WelcomeMessageEnabled &&
+                _settings.BotConfig.WelcomeMessageChannelId is not 0 &&
+                !string.IsNullOrEmpty(_settings.BotConfig.WelcomeMessage))
             {
-                var discordServerGuild = DiscordSocketClient.GetGuild(DiscordConfig.ServerGuildId);
+                var discordServerGuild = _discordSocketClient.GetGuild(_settings.DiscordConfig.ServerGuildId);
 
-                if (discordServerGuild is null)
-                {
-                    Log.Error($"Server guild with id: {DiscordConfig.ServerGuildId} not found");
-                }
+                if (discordServerGuild is null) Log.Error($"Server guild with id: {_settings.DiscordConfig.ServerGuildId} not found");
 
-                var discordChannel = await DiscordSocketClient.GetChannelAsync(BotConfig.WelcomeMessageChannelId);
+                var discordChannel = await _discordSocketClient.GetChannelAsync(_settings.BotConfig.WelcomeMessageChannelId);
 
                 if (discordChannel is IMessageChannel msgChannel)
                 {
-                    var message = BotConfig.WelcomeMessage
-                                                  .Replace("$user_mention", arg.Mention);
+                    var message = _settings.BotConfig.WelcomeMessage
+                                           .Replace("$user_mention", arg.Mention);
 
                     await msgChannel.SendMessageAsync(message);
                 }
                 else
                 {
-                    Log.Error($"Server welcome message channel with id: {BotConfig.WelcomeMessageChannelId} not found");
+                    Log.Error($"Server welcome message channel with id: {_settings.BotConfig.WelcomeMessageChannelId} not found");
                 }
             }
-        }
-
-        private async Task CreateStartupJobs()
-        {
-            await QuartzJobHelper.SimplyCreateJob<UpdateDiscordNames>(_scheduler,
-                "update_discord_names", x => x.RepeatForever().WithIntervalInMinutes(5));
-
-            await QuartzJobHelper.SimplyCreateJob<UpdateDiscordRoles>(_scheduler,
-                "update_discord_roles", x => x.RepeatForever().WithIntervalInMinutes(5));
         }
 
         private static Task DiscordClientOnLog(LogMessage arg)

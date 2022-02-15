@@ -1,12 +1,8 @@
-using System;
 using System.Reflection;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using Serilog.Core;
 
 namespace Leviathan.Bot.Services
 {
@@ -26,10 +22,10 @@ namespace Leviathan.Bot.Services
         public async Task InitializeAsync()
         {
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-            
+
             _client.InteractionCreated += HandleInteraction;
         }
-        
+
         private async Task HandleInteraction(SocketInteraction arg)
         {
             try
@@ -40,11 +36,9 @@ namespace Leviathan.Bot.Services
             catch (Exception ex)
             {
                 Log.Error(ex, "HandleInteraction Exception");
-                
-                if (arg.Type == InteractionType.ApplicationCommand)
-                {
-                    await arg.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
-                }
+
+                if (arg.Type == InteractionType.ApplicationCommand) 
+                    await arg.GetOriginalResponseAsync().ContinueWith(async msg => await msg.Result.DeleteAsync());
             }
         }
     }
