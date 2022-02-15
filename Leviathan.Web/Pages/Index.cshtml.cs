@@ -34,7 +34,7 @@ namespace Leviathan.Web.Pages
             _localizedIndexInstructionText = LocalizationHelper.GetLocalizedString("WebInstructionsText")
                                                                .Split("~-~"); // that cant split normally
             
-            var esiClient = new EsiClient(Options.Create(settings.ESIConfig));
+            var esiClient = new EsiClient(settings.ESIConfig);
             
             _state = Guid.NewGuid().ToString().Replace("-", "")[..16];
             

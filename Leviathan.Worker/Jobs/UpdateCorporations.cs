@@ -27,7 +27,7 @@ namespace Leviathan.Jobs
 
             if (await _sqliteContext.Corporations.AnyAsync())
             {
-                var esiClient = new EsiClient(Options.Create(_settings.ESIConfig));
+                var esiClient = new EsiClient(_settings.ESIConfig);
 
                 _logger.Information($"Job update_corporations corporations count: {await _sqliteContext.Corporations.CountAsync()}");
 

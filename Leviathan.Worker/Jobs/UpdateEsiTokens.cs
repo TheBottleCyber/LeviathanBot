@@ -32,12 +32,9 @@ namespace Leviathan.Jobs
                 var characters = _sqliteContext.Characters.Where(x => !string.IsNullOrEmpty(x.EsiTokenAccessToken) &&
                                                                       !string.IsNullOrEmpty(x.EsiTokenRefreshToken));
 
-                var esiClient = new EsiClient(Options.Create(_settings.ESIConfig));
+                var esiClient = new EsiClient(_settings.ESIConfig);
                 foreach (var character in characters)
                 {
-                    _logger.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
-                                        $" with character_id: {character.EsiCharacterID} token update started");
-
                     try
                     {
                         var token = await esiClient.SSO.GetToken(GrantType.RefreshToken, character.EsiTokenRefreshToken);
@@ -78,9 +75,6 @@ namespace Leviathan.Jobs
                         _logger.Error(ex, "Unhandled exception at job update_esi_tokens at" +
                                           $" character_name: {character.EsiCharacterName} with character_id: {character.EsiCharacterID}");
                     }
-
-                    _logger.Information($"Job update_esi_tokens at character_name: {character.EsiCharacterName}" +
-                                        $" with character_id: {character.EsiCharacterID} token update finished");
                 }
 
                 await _sqliteContext.SaveChangesAsync();

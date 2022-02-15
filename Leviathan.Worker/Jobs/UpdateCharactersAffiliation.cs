@@ -35,7 +35,7 @@ namespace Leviathan.Jobs
                 _logger.Information($"Job update_character_affiliation job characters count: {characterIdList.Count}");
 
                 //TODO: add chunking, possible max ids restriction according https://esi.evetech.net/ui/#/Character/post_characters_affiliation
-                var affiliationEsiResponse = await new EsiClient(Options.Create(_settings.ESIConfig)).Character.Affiliation(characterIdList.ToArray());
+                var affiliationEsiResponse = await new EsiClient(_settings.ESIConfig).Character.Affiliation(characterIdList.ToArray());
                 if (affiliationEsiResponse.Data is not null)
                 {
                     foreach (var affiliation in affiliationEsiResponse.Data)

@@ -21,14 +21,14 @@ namespace Leviathan.Core.Controllers
         private readonly MemoryContext _memoryContext;
         private readonly SqliteContext _sqliteContext;
         private readonly Settings _settings;
-        private readonly IOptions<EsiConfig> _esiConfig;
+        private readonly EsiConfig _esiConfig;
 
         public LinkController(MemoryContext memoryContext, SqliteContext sqliteContext, Settings settings)
         {
             _memoryContext = memoryContext;
             _sqliteContext = sqliteContext;
             _settings = settings;
-            _esiConfig = Options.Create(settings.ESIConfig);
+            _esiConfig = settings.ESIConfig;
         }
 
         [HttpGet("/evecallback")]
