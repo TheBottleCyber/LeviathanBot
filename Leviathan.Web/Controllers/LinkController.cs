@@ -8,6 +8,7 @@ using Leviathan.Core.Models;
 using Leviathan.Core.Models.Database;
 using Leviathan.Core.Models.Discord;
 using Leviathan.Core.Models.Options;
+using Leviathan.Web.DatabaseContext;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;

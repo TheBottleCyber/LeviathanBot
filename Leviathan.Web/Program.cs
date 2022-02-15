@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Leviathan.Core.Models.Options;
 using Leviathan.Core.Localization;
+using Leviathan.Web.DatabaseContext;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Events;

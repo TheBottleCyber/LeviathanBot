@@ -1,7 +1,7 @@
 using Leviathan.Core.Models.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace Leviathan.Core.DatabaseContext
+namespace Leviathan.Web.DatabaseContext
 {
     public class MemoryContext : DbContext
     {

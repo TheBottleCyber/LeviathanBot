@@ -7,6 +7,7 @@ using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Localization;
 using Leviathan.Core.Models.Database;
 using Leviathan.Core.Models.Options;
+using Leviathan.Web.DatabaseContext;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;

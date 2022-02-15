@@ -77,7 +77,7 @@ namespace Leviathan.Bot
                     }
                     else
                     {
-                        Thread.Sleep(50);
+                        await Task.Delay(150);
                     }
                 }
                 
