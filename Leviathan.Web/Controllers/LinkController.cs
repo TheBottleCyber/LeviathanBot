@@ -40,7 +40,7 @@ namespace Leviathan.Core.Controllers
             if (user is not null)
             {
                 var esiClient = new EsiClient(_esiConfig);
-                
+
                 var esiToken = await esiClient.SSO.GetToken(GrantType.AuthorizationCode, code);
                 var authorizedCharacter = await esiClient.SSO.Verify(esiToken);
 
@@ -135,42 +135,27 @@ namespace Leviathan.Core.Controllers
             {
                 if (user.DiscordUserId != 0 && user.EsiCharacterID != 0)
                 {
-                    if (!await _sqliteContext.Characters.AnyAsync(x => x.EsiCharacterID == user.EsiCharacterID))
+                    var oldUsers = _sqliteContext.Characters
+                                                 .Where(x => x.EsiCharacterID == user.EsiCharacterID ||
+                                                             x.DiscordUserId == user.DiscordUserId);
+
+                    foreach (var oldUser in oldUsers)
                     {
-                        var tempUserId = user.Id;
-                        user.Id = 0;
-                        await _sqliteContext.AddAsync(user);
-                        await _sqliteContext.SaveChangesAsync();
-
-                        user.Id = tempUserId;
-                        _memoryContext.Remove(user);
-                        await _memoryContext.SaveChangesAsync();
+                        _sqliteContext.Remove(oldUser);
                     }
-                    else
-                    {
-                        var oldUser = await _sqliteContext.Characters.FirstOrDefaultAsync(x => x.EsiCharacterID == user.EsiCharacterID);
 
-                        if (oldUser is not null)
-                        {
-                            oldUser.EsiCharacterName = user.EsiCharacterName;
-                            oldUser.EsiAllianceID = user.EsiAllianceID;
-                            oldUser.EsiCorporationID = user.EsiCorporationID;
-                            oldUser.EsiTokenAccessToken = user.EsiTokenAccessToken;
-                            oldUser.EsiTokenExpiresOn = user.EsiTokenExpiresOn;
-                            oldUser.EsiTokenRefreshToken = user.EsiTokenRefreshToken;
-                            oldUser.DiscordUserId = user.DiscordUserId;
-                            oldUser.State = user.State;
-                            oldUser.EsiSsoStatus = true;
+                    var tempUserId = user.Id;
+                    user.Id = 0;
+                    await _sqliteContext.AddAsync(user);
+                    await _sqliteContext.SaveChangesAsync();
 
-                            await _sqliteContext.SaveChangesAsync();
-                            _memoryContext.Characters.Remove(user);
-                            await _memoryContext.SaveChangesAsync();
-                        }
-                    }
+                    user.Id = tempUserId;
+                    _memoryContext.Remove(user);
+                    await _memoryContext.SaveChangesAsync();
 
                     return Ok("You can close this window");
                 }
-                
+
                 return BadRequest("Seems not all tokens provided, come back and reauth");
             }
 
