@@ -6,6 +6,11 @@ Leviathan is bot for EVE Online authorization, including tickers and character n
 
 <br/>
 
+
+## About
+- This bot was created in order to simplify authorization and obtaining roles in the discord
+- You can send me some in-game ISK if you want to **support** developing **Leviathan**: **The Bottle** (in-game character)
+
 ## Build and Run requirements
 
 - **Visual Studio 2022** or **Rider** for changing code
@@ -19,7 +24,7 @@ Leviathan is bot for EVE Online authorization, including tickers and character n
   - [How to find what data you are need for bot](https://github.com/TheBottleCyber/LeviathanBot/wiki/How-to-get-all-required-data-for-settings)
   - [How to setup your own **settings.json** file](https://github.com/TheBottleCyber/LeviathanBot/wiki/Configure-settings.json)
 
-### Advantages
+## Advantages
 - **.NET Core 6** powered multi-platform support (Win, Linux, Mac, etc.) using the latest technologies
 - **SQLite** database with **Enitity Framework Core**, **ESI.NET** package for **EVE Online ESI** API requests, **Quartz** for delaying jobs and **Discord.Net** package for discord API
 - Only **three buttons** for getting discord roles **no needs to write anything** in the discord channel
