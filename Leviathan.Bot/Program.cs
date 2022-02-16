@@ -64,12 +64,6 @@ namespace Leviathan.Bot
 
                 await _discordSocketClient.LoginAsync(TokenType.Bot, _settings.DiscordConfig.BotToken);
                 await _discordSocketClient.StartAsync();
-
-                while (true)
-                {
-                    if (_discordSocketClient.ConnectionState == ConnectionState.Connected) break;
-                    else Thread.Sleep(150);
-                }
                 
                 await builder.RunAsync();
             }
@@ -100,7 +94,6 @@ namespace Leviathan.Bot
                 q.AddTrigger(t =>
                     t.WithIdentity("update_discord_names_trigger")
                      .ForJob(update_discord_names)
-                     .StartNow()
                      .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(5))
                 );
 
@@ -109,7 +102,6 @@ namespace Leviathan.Bot
                 q.AddTrigger(t =>
                     t.WithIdentity("update_discord_roles_trigger")
                      .ForJob(update_discord_roles)
-                     .StartNow()
                      .WithSimpleSchedule(x => x.RepeatForever().WithIntervalInMinutes(5))
                 );
 
