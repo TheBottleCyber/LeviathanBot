@@ -1,6 +1,6 @@
 <img align="left" src="images/logo.png" class="img-thumbnail" width="144"  alt="logo"/>
 
-# Leviathan EVE Online Discord Bot WIP
+# Leviathan EVE Online Discord Bot
 
 Leviathan is bot for EVE Online authorization, including tickers and character names with filters
 
@@ -15,9 +15,9 @@ Leviathan is bot for EVE Online authorization, including tickers and character n
 ### Set up your discord bot
 
 - Build or/and deploy your **docker-compose.yml** file and set up your own **settings.json** file
-- How to compile or pull from release - https://github.com/TheBottleCyber/LeviathanBot/wiki/Build-&-Installation
-- How to find what data you are need for bot - https://github.com/TheBottleCyber/LeviathanBot/wiki/How-to-get-all-required-data-for-settings
-- How to setup your own **settings.json** file - https://github.com/TheBottleCyber/LeviathanBot/wiki/Configure-settings.json
+  - [How to compile or pull from release](https://github.com/TheBottleCyber/LeviathanBot/wiki/Build-&-Installation)
+  - [How to find what data you are need for bot](https://github.com/TheBottleCyber/LeviathanBot/wiki/How-to-get-all-required-data-for-settings)
+  - [How to setup your own **settings.json** file](https://github.com/TheBottleCyber/LeviathanBot/wiki/Configure-settings.json)
 
 ### Advantages
 - **.NET Core 6** powered multi-platform support (Win, Linux, Mac, etc.) using the latest technologies
@@ -28,4 +28,5 @@ Leviathan is bot for EVE Online authorization, including tickers and character n
 - Allow only **authed** ingame characters into your Discord group
 - Multiply discord roles with one of the filters
 - Filters works for **character names**, **corporations** and **alliances**
+- [Have **wiki** describing the entire installation and configuring process](https://github.com/TheBottleCyber/LeviathanBot/wiki)
 - Open for **issues** and **pull requests**
