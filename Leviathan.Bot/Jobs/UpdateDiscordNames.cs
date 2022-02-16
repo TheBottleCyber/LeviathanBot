@@ -1,3 +1,4 @@
+using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 using Leviathan.Core.DatabaseContext;
@@ -26,7 +27,14 @@ namespace Leviathan.Bot.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.Information("Job update_discord_names started");
+            _logger.Information($"Job {context.JobDetail.Key} started");
+            
+            if (_discordSocketClient.ConnectionState != ConnectionState.Connected)
+            {
+                _logger.Warning($"Job {context.JobDetail.Key} skipped because discord client connection state is {_discordSocketClient.ConnectionState}");
+                return;
+            }
+               
             var discordServerGuild = _discordSocketClient.GetGuild(_settings.DiscordConfig.ServerGuildId);
 
             if (discordServerGuild is not null)
@@ -61,17 +69,17 @@ namespace Leviathan.Bot.Jobs
                         {
                             try
                             {
-                                _logger.Information($"Job update_discord_names trying rename user with username: {discordUser.Username}#{discordUser.Discriminator} to nickname: {discordNicknameNeeded}");
+                                _logger.Information($"Job {context.JobDetail.Key} trying rename user with username: {discordUser.Username}#{discordUser.Discriminator} to nickname: {discordNicknameNeeded}");
                                 await discordUser.ModifyAsync(x => { x.Nickname = discordNicknameNeeded; });
-                                _logger.Information($"Job update_discord_names rename user with username: {discordUser.Username}#{discordUser.Discriminator} success");
+                                _logger.Information($"Job {context.JobDetail.Key} rename user with username: {discordUser.Username}#{discordUser.Discriminator} success");
                             }
                             catch (HttpException)
                             {
-                                _logger.Warning($"Job update_discord_names cannot rename user with username: {discordUser.Username}#{discordUser.Discriminator} not enough priveleges");
+                                _logger.Warning($"Job {context.JobDetail.Key} cannot rename user with username: {discordUser.Username}#{discordUser.Discriminator} not enough priveleges");
                             }
                             catch (Exception ex)
                             {
-                                _logger.Error(ex, $"Job update_discord_names ModifyAsync user with username: {discordUser.Username}#{discordUser.Discriminator} failed");
+                                _logger.Error(ex, $"Job {context.JobDetail.Key} ModifyAsync user with username: {discordUser.Username}#{discordUser.Discriminator} failed");
                             }
                         }
                     }
@@ -79,10 +87,10 @@ namespace Leviathan.Bot.Jobs
             }
             else
             {
-                _logger.Error($"Job update_discord_names server guild with id: {_settings.DiscordConfig.ServerGuildId} not found");
+                _logger.Error($"Job {context.JobDetail.Key} server guild with id: {_settings.DiscordConfig.ServerGuildId} not found");
             }
 
-            _logger.Information("Job update_discord_names finished");
+            _logger.Information($"Job {context.JobDetail.Key} finished");
         }
     }
 }

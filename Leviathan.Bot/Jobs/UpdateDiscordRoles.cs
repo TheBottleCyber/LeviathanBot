@@ -27,7 +27,13 @@ namespace Leviathan.Bot.Jobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            _logger.Information("Job update_discord_roles started");
+            _logger.Information($"Job {context.JobDetail.Key} started");
+            
+            if (_discordSocketClient.ConnectionState != ConnectionState.Connected)
+            {
+                _logger.Warning($"Job {context.JobDetail.Key} skipped because discord client connection state is {_discordSocketClient.ConnectionState}");
+                return;
+            }
             
             var discordServerGuild = _discordSocketClient.GetGuild(_settings.DiscordConfig.ServerGuildId);
 
@@ -52,7 +58,7 @@ namespace Leviathan.Bot.Jobs
                             if (authGroup.AllowedCharacters is not null && authGroup.AllowedCharacters.Count > 0 &&
                                 authGroup.AllowedCharacters.Contains(character.EsiCharacterName))
                             {
-                                _logger.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
+                                _logger.Information($"Job {context.JobDetail.Key} user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
                                                     $" matched character name: {character.EsiCharacterName}");
 
                                 assigmentBoolean = true;
@@ -62,7 +68,7 @@ namespace Leviathan.Bot.Jobs
                                 corporation is not null &&
                                 authGroup.AllowedCorporations.Contains(corporation.Ticker))
                             {
-                                _logger.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
+                                _logger.Information($"Job {context.JobDetail.Key} user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
                                                     $" matched corporation ticker: {corporation.Ticker}");
 
                                 assigmentBoolean = true;
@@ -72,7 +78,7 @@ namespace Leviathan.Bot.Jobs
                                 alliance is not null &&
                                 authGroup.AllowedAlliances.Contains(alliance.Ticker))
                             {
-                                _logger.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
+                                _logger.Information($"Job {context.JobDetail.Key} user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
                                                     $" matched alliance ticker: {alliance.Ticker}");
 
                                 assigmentBoolean = true;
@@ -81,7 +87,7 @@ namespace Leviathan.Bot.Jobs
                             if (_settings.BotConfig.RemoveRolesIfTokenIsInvalid &&
                                 !character.EsiSsoStatus)
                             {
-                                _logger.Information($"Job update_discord_roles user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
+                                _logger.Information($"Job {context.JobDetail.Key} user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}" +
                                                     $" esi token invalid, removing roles");
 
                                 assigmentBoolean = false;
@@ -109,7 +115,7 @@ namespace Leviathan.Bot.Jobs
                                     {
                                         if (role.Value)
                                         {
-                                            _logger.Information($"Job update_discord_roles adding role {discordGuildRole.Name} at user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}");
+                                            _logger.Information($"Job {context.JobDetail.Key} adding role {discordGuildRole.Name} at user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}");
 
                                             await discordUser.AddRoleAsync(discordGuildRole, RequestOptions.Default);
                                         }
@@ -118,7 +124,7 @@ namespace Leviathan.Bot.Jobs
                                     {
                                         if (!role.Value)
                                         {
-                                            _logger.Information($"Job update_discord_roles removing role {discordGuildRole.Name} at user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}");
+                                            _logger.Information($"Job {context.JobDetail.Key} removing role {discordGuildRole.Name} at user with username: {discordUser.Username}#{discordUser.DiscriminatorValue}");
 
                                             await discordUser.RemoveRoleAsync(discordGuildRole, RequestOptions.Default);
                                         }
@@ -126,7 +132,7 @@ namespace Leviathan.Bot.Jobs
                                 }
                                 else
                                 {
-                                    _logger.Error($"Job update_discord_roles role with name: {role.Key} not found");
+                                    _logger.Error($"Job {context.JobDetail.Key} role with name: {role.Key} not found");
                                 }
                             }
                         }
@@ -157,17 +163,17 @@ namespace Leviathan.Bot.Jobs
                                 {
                                     try
                                     {
-                                        _logger.Information($"Job update_discord_roles try remove role \"{role.Name}\" at user: " +
+                                        _logger.Information($"Job {context.JobDetail.Key} try remove role \"{role.Name}\" at user: " +
                                                             $"{discordUser.Username}#{discordUser.DiscriminatorValue}");
 
                                         await discordUser.RemoveRoleAsync(role);
 
-                                        _logger.Information($"Job update_discord_roles remove role \"{role.Name}\" at user: " +
+                                        _logger.Information($"Job {context.JobDetail.Key} remove role \"{role.Name}\" at user: " +
                                                             $"{discordUser.Username}#{discordUser.DiscriminatorValue} success");
                                     }
                                     catch (Exception ex)
                                     {
-                                        _logger.Error(ex, "Job update_discord_roles unhandled exception");
+                                        _logger.Error(ex, $"Job {context.JobDetail.Key} unhandled exception");
                                     }
                                 }
                             }
@@ -177,10 +183,10 @@ namespace Leviathan.Bot.Jobs
             }
             else
             {
-                _logger.Error($"Job update_discord_roles server guild with id: {_settings.DiscordConfig.ServerGuildId} not found");
+                _logger.Error($"Job {context.JobDetail.Key} server guild with id: {_settings.DiscordConfig.ServerGuildId} not found");
             }
 
-            _logger.Information("Job update_discord_roles finished");
+            _logger.Information($"Job {context.JobDetail.Key} finished");
         }
     }
 }

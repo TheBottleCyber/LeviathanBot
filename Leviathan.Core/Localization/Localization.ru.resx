@@ -14,18 +14,6 @@
     <data name="DiscordTimeCommand" xml:space="preserve">
         <value>Время в EVE Online:</value>
     </data>
-    <data name="Days" xml:space="preserve">
-        <value>Дней</value>
-    </data>
-    <data name="Hours" xml:space="preserve">
-        <value>Часов</value>
-    </data>
-    <data name="Minutes" xml:space="preserve">
-        <value>Минут</value>
-    </data>
-    <data name="Seconds" xml:space="preserve">
-        <value>Секунд</value>
-    </data>
     <data name="DiscordAboutCommandRunTime" xml:space="preserve">
         <value>С запуска прошло:</value>
     </data>

@@ -50,8 +50,6 @@ namespace Leviathan.Bot
             try
             {
                 Log.Information("Starting bot host");
-                var delay = false;
-
                 var builder = CreateHostBuilder(args).Build();
                 _discordSocketClient = builder.Services.GetRequiredService<DiscordSocketClient>();
                 await builder.Services.GetRequiredService<CommandHandler>().InitializeAsync();
@@ -60,7 +58,6 @@ namespace Leviathan.Bot
                 _discordSocketClient.UserJoined += ClientOnUserJoined;
                 _discordSocketClient.Ready += async () =>
                 {
-                    delay = true;
                     await builder.Services.GetRequiredService<InteractionService>()
                                  .RegisterCommandsToGuildAsync(_settings.DiscordConfig.ServerGuildId);
                 };
@@ -68,17 +65,10 @@ namespace Leviathan.Bot
                 await _discordSocketClient.LoginAsync(TokenType.Bot, _settings.DiscordConfig.BotToken);
                 await _discordSocketClient.StartAsync();
 
-                //TODO: fix this https://upload.wikimedia.org/wikipedia/commons/a/ab/Qabbayim.jpg
-                for (;;)
+                while (true)
                 {
-                    if (delay)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        await Task.Delay(150);
-                    }
+                    if (_discordSocketClient.ConnectionState == ConnectionState.Connected) break;
+                    else Thread.Sleep(150);
                 }
                 
                 await builder.RunAsync();

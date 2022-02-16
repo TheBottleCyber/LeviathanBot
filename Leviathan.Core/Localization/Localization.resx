@@ -21,18 +21,6 @@
     <data name="DiscordTimeCommand" xml:space="preserve">
         <value>Time in EVE Online now:</value>
     </data>
-    <data name="Days" xml:space="preserve">
-        <value>Days</value>
-    </data>
-    <data name="Hours" xml:space="preserve">
-        <value>Hours</value>
-    </data>
-    <data name="Minutes" xml:space="preserve">
-        <value>Minutes</value>
-    </data>
-    <data name="Seconds" xml:space="preserve">
-        <value>Seconds</value>
-    </data>
     <data name="DiscordAboutCommandRunTime" xml:space="preserve">
         <value>Run Time:</value>
     </data>

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using Discord;
 using Discord.Interactions;
+using Humanizer;
 using Leviathan.Bot.Services;
 using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Localization;
@@ -29,16 +30,8 @@ namespace Leviathan.Bot.Modules
         public async Task About()
         {
             var dateUntilProcessStarted = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
-            var daysLocalizedString = LocalizationHelper.GetLocalizedString("Days");
-            var hoursLocalizedString = LocalizationHelper.GetLocalizedString("Hours");
-            var minutesLocalizedString = LocalizationHelper.GetLocalizedString("Minutes");
-            var secondsLocalizedString = LocalizationHelper.GetLocalizedString("Seconds");
-
-            var stringDate = $"{dateUntilProcessStarted.Days} {daysLocalizedString} " +
-                             $"{dateUntilProcessStarted.Hours} {hoursLocalizedString} " +
-                             $"{dateUntilProcessStarted.Minutes} {minutesLocalizedString} " +
-                             $"{dateUntilProcessStarted.Seconds} {secondsLocalizedString}";
-
+            var stringDate = dateUntilProcessStarted.Humanize();
+            
             var runTimeLocalizedString = LocalizationHelper.GetLocalizedString("DiscordAboutCommandRunTime");
             var devLocalizedString = LocalizationHelper.GetLocalizedString("Developer");
             var inGameNickLocalizedString = LocalizationHelper.GetLocalizedString("DiscordAboutCommandInGameNick");
