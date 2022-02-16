@@ -50,6 +50,7 @@ namespace Leviathan.Bot
             try
             {
                 Log.Information("Starting bot host");
+                
                 var builder = CreateHostBuilder(args).Build();
                 _discordSocketClient = builder.Services.GetRequiredService<DiscordSocketClient>();
                 await builder.Services.GetRequiredService<CommandHandler>().InitializeAsync();
@@ -65,6 +66,12 @@ namespace Leviathan.Bot
                 await _discordSocketClient.LoginAsync(TokenType.Bot, _settings.DiscordConfig.BotToken);
                 await _discordSocketClient.StartAsync();
                 
+                while (true)
+                {
+                    if (_discordSocketClient.ConnectionState == ConnectionState.Connected) break;
+                    else Thread.Sleep(250);
+                }
+
                 await builder.RunAsync();
             }
             catch (Exception ex)

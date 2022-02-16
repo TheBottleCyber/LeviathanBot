@@ -21,7 +21,19 @@ namespace Leviathan.Bot.Services
 
         public async Task InitializeAsync()
         {
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            var currentAssembly = Assembly.GetEntryAssembly();
+            
+            if (currentAssembly!.GetName().Name == "Leviathan.Bot")
+            {
+                await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            }
+            else
+            {
+                var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                                        .SingleOrDefault(assembly => assembly.GetName().Name == "Leviathan.Bot");
+                
+                await _commands.AddModulesAsync(assembly, _services);
+            }
 
             _client.InteractionCreated += HandleInteraction;
         }

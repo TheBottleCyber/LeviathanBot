@@ -36,7 +36,7 @@ namespace Leviathan.Bot.Modules
             var devLocalizedString = LocalizationHelper.GetLocalizedString("Developer");
             var inGameNickLocalizedString = LocalizationHelper.GetLocalizedString("DiscordAboutCommandInGameNick");
 
-            await RespondAsync("Leviathan v1.0.5 - EVE Online Discord Bot\n" +
+            await RespondAsync("Leviathan v1.0.8 - EVE Online Discord Bot\n" +
                                $"{devLocalizedString}: TheBottle ({inGameNickLocalizedString} The Bottle)\n\n" +
                                $"{runTimeLocalizedString} {stringDate}");
         }
