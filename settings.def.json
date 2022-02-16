@@ -30,10 +30,18 @@
     "RemoveRolesIfTokenIsInvalid": true,
     "AuthGroups": [
       {
-        "AllowedCorporations": ["CORP_TICKER"],
-        "AllowedCharacters": ["Character Name"],
-        "AllowedAlliances": ["ALLY_TICKER"],
-        "DiscordRoles": ["Discord Role"]
+        "AllowedCorporations": [
+          "CORP_TICKER"
+        ],
+        "AllowedCharacters": [
+          "Character Name"
+        ],
+        "AllowedAlliances": [
+          "ALLY_TICKER"
+        ],
+        "DiscordRoles": [
+          "Discord Role"
+        ]
       }
     ]
   }

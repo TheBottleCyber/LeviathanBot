@@ -44,7 +44,7 @@ namespace Leviathan.Worker
         {
             try
             {
-                Log.Information("Starting Leviathan.Worker host");
+                Log.Information("Starting worker host");
 
                 await CreateHostBuilder(args).Build().RunAsync();
             }

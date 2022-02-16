@@ -19,7 +19,7 @@ namespace Leviathan.Web
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                          .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -33,7 +33,7 @@ namespace Leviathan.Web
             {
                 Log.Information("Starting web host");
 
-                CreateHostBuilder(args).Build().Run();
+                await CreateHostBuilder(args).Build().RunAsync();
             }
             catch (Exception ex)
             {
