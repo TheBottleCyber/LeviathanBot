@@ -5,14 +5,16 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Leviathan</RootNamespace>
+        <RootNamespace>Leviathan.Worker</RootNamespace>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     </PropertyGroup>
-
+    
     <ItemGroup>
       <PackageReference Include="Discord.Net" Version="3.3.0" />
       <PackageReference Include="ESI.NETFork" Version="2.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
@@ -22,7 +24,6 @@
       <PackageReference Include="Serilog" Version="2.10.0" />
       <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
       <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
-      <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>

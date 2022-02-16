@@ -3,13 +3,13 @@ using ESI.NET.Enumerations;
 using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Extensions;
 using Leviathan.Core.Models.Options;
-using Leviathan.Jobs.Runtime;
+using Leviathan.Worker.Jobs.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Quartz;
 using Serilog;
 
-namespace Leviathan.Jobs.Schedule
+namespace Leviathan.Worker.Jobs.Schedule
 {
     [DisallowConcurrentExecution]
     public class ScheduleUpdateEsiToken : IJob

@@ -33,10 +33,8 @@ namespace Leviathan.Core.Extensions
             if (File.Exists(settingsFile))
             {
                 logger.Debug($"Using settings.json located in {new FileInfo(settingsFile).FullName}");
-
-                var settings = new ConfigurationBuilder()
-                               .AddJsonFile(settingsFile)
-                               .Build().Get<Settings>();
+                
+                var settings = JsonConvert.DeserializeObject<Settings>(File.ReadAllText(settingsFile))!;
 
                 // VerifySettingsFile(logger, settings);
 

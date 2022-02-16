@@ -2,8 +2,8 @@
 using Leviathan.Core.DatabaseContext;
 using Leviathan.Core.Extensions;
 using Leviathan.Core.Models.Options;
-using Leviathan.Jobs;
-using Leviathan.Jobs.Schedule;
+using Leviathan.Worker.Jobs;
+using Leviathan.Worker.Jobs.Schedule;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,7 +11,7 @@ using Quartz;
 using Serilog;
 using Serilog.Events;
 
-namespace Leviathan
+namespace Leviathan.Worker
 {
     public class Program
     {

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Quartz;
 using Serilog;
 
-namespace Leviathan.Jobs
+namespace Leviathan.Worker.Jobs
 {
     [DisallowConcurrentExecution]
     public class StartupUpdateCharacters : IJob

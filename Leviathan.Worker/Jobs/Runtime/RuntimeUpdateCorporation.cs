@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Quartz;
 using Serilog;
 
-namespace Leviathan.Jobs.Runtime
+namespace Leviathan.Worker.Jobs.Runtime
 {
     [DisallowConcurrentExecution]
     public class RuntimeUpdateCorporation : IJob
